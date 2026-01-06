@@ -6,6 +6,9 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
+// LOG TO CONFIRM FILE LOADED
+console.log("✅ purchases.js route file loaded");
+
 // POST /api/purchases - Create new purchase record
 router.post('/', async (req, res) => {
   try {
@@ -28,7 +31,6 @@ router.post('/', async (req, res) => {
 
     // Fetch User Profile logic
     let finalBuyerInfo = buyerInfo || {};
-    // Check if buyerInfo is essentially empty
     const isBuyerInfoEmpty = !buyerInfo || (typeof buyerInfo === 'object' && Object.keys(buyerInfo).length === 0);
     
     let buyerUserId = null;
@@ -40,9 +42,7 @@ router.post('/', async (req, res) => {
           buyerUserId = user._id;
           finalBuyerInfo = {
             name: user.username || 'Online Customer',
-            // --- FIX: Use user.phone here ---
             phone: user.phone || '', 
-            // --------------------------------
             address: 'Online Purchase',
             sellerPhone: ''
           };
@@ -101,28 +101,40 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/purchases/ticket/:ticketId
+// ==========================================
+//  FIXED ROUTE FOR QR VERIFICATION
+// ==========================================
 router.get('/ticket/:ticketId', async (req, res) => {
   try {
     const { ticketId } = req.params;
-    
-    const purchaseDoc = await Purchase.findOne({ ticketId: parseInt(ticketId) });
+    console.log(`🔍 [DEBUG] Searching for Ticket ID: ${ticketId}`);
+
+    // TRICK: Use .collection.findOne() to bypass Mongoose Schema rules.
+    // We search for BOTH string "5" and number 5 directly in the DB.
+    const purchaseDoc = await Purchase.collection.findOne({
+      $or: [
+        { ticketId: parseInt(ticketId) },   // Try Number: 5
+        { ticketId: ticketId.toString() }   // Try String: "5"
+      ]
+    });
     
     if (!purchaseDoc) {
+      console.log(`❌ [DEBUG] Ticket #${ticketId} NOT found in DB.`);
       return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
 
-    // Convert to object so we can modify it
-    let purchase = purchaseDoc.toObject();
+    console.log(`✅ [DEBUG] Found Purchase:`, purchaseDoc.purchaseId);
 
-    // --- FIX: Inject Live User Data for Verification ---
+    // Since we used raw collection, we don't have .toObject() or virtuals.
+    let purchase = purchaseDoc;
+
+    // Manually inject user info
     if (purchase.buyerUser) {
       try {
         const user = await User.findById(purchase.buyerUser);
         if (user) {
           if (!purchase.buyerInfo) purchase.buyerInfo = {};
           
-          // Overwrite with live data from User Profile
           purchase.buyerInfo.name = user.username || user.name || purchase.buyerInfo.name || 'Unknown';
           purchase.buyerInfo.phone = user.phone || purchase.buyerInfo.phone || 'N/A';
         }
@@ -130,7 +142,6 @@ router.get('/ticket/:ticketId', async (req, res) => {
         console.warn("Error refreshing user details:", err);
       }
     }
-    // ---------------------------------------------------
     
     res.json({
       success: true,

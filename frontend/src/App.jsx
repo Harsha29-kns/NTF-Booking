@@ -13,6 +13,7 @@ import AdminVerifyPage from './pages/AdminVerifyPage'; // New Page for Salesmen
 import MyTicketsPage from './pages/MyTicketsPage';
 import PrintTicketPage from './pages/PrintTicketPage';
 import TestCreatePage from './pages/TestCreatePage';
+import ProfilePage from './pages/ProfilePage';
 import './index.css';
 
 // Component to protect routes based on role
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/ticket/:id/print" element={<PrintTicketPage />} />
                 <Route path="/verify" element={<VerifyTicketPage />} />
                 <Route path="/my-tickets" element={<MyTicketsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 
                 {/* Protected Organizer Routes */}
                 <Route 

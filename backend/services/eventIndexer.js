@@ -180,24 +180,60 @@ class EventIndexer {
     }
   }
 
+  // ==========================================
+  //  UPDATED FUNCTION TO FIX ID MISMATCHES
+  // ==========================================
   async processTicketPurchasedEvents(events) {
     for (const event of events) {
       try {
         const { ticketId, buyer, price } = event.args;
+        const txHash = event.transactionHash.toLowerCase();
+        const eventTicketId = parseInt(ticketId); // The REAL ID from Blockchain
+
+        console.log(`🔍 Processing TicketPurchased: ID ${eventTicketId} | Tx: ${txHash}`);
         
-        // Update event record
+        // 1. Update Event Record (Availability)
         await Event.findOneAndUpdate(
           { ticketId: ticketId.toString() },
           { 
-            isSold: true,
-            buyer: buyer.toLowerCase()
+            isSold: true, 
+            buyer: buyer.toLowerCase() 
           }
         );
 
-        // Note: Purchase records are created by the frontend with proper buyer info
-        // We don't create them here from blockchain events to avoid validation errors
+        // 2. Find Purchase Record by TX HASH (The source of truth)
+        // This finds the record even if the frontend saved the wrong ID (e.g., 6 vs 7)
+        let purchase = await Purchase.findOne({ purchaseTxHash: txHash });
+
+        // Fallback: If not found by hash, try ticketId (legacy support)
+        if (!purchase) {
+             purchase = await Purchase.findOne({ 
+                 $or: [
+                     { ticketId: eventTicketId },
+                     { ticketId: eventTicketId.toString() }
+                 ]
+             });
+        }
+
+        // 3. Auto-Correct DB if Mismatch Found
+        if (purchase) {
+             if (parseInt(purchase.ticketId) !== eventTicketId) {
+                 console.warn(`⚠️ FIXING MISMATCH: Updating DB Ticket ID from ${purchase.ticketId} to ${eventTicketId}`);
+                 purchase.ticketId = eventTicketId; // Sync DB with Blockchain
+             }
+
+             // Confirm Status
+             purchase.status = 'purchased';
+             if (!purchase.blockNumber) purchase.blockNumber = {};
+             purchase.blockNumber.purchase = event.blockNumber;
+             
+             await purchase.save();
+             console.log(`✅ Synced Purchase Record for Ticket #${eventTicketId}`);
+        } else {
+             console.warn(`⚠️ Purchase DB record not found for Ticket #${eventTicketId} (Tx: ${txHash})`);
+        }
         
-        // Update user stats if user exists
+        // 4. Update user stats if user exists
         const buyerUser = await User.findOne({ walletAddress: buyer.toLowerCase() });
         if (buyerUser) {
           await buyerUser.updateStats('ticket_purchased', parseFloat(price.toString()));
@@ -251,8 +287,8 @@ class EventIndexer {
         await Event.findOneAndUpdate(
           { ticketId: ticketId.toString() },
           { 
-            isRefunded: true,
-            status: 'cancelled'
+            isRefunded: true, 
+            status: 'cancelled' 
           }
         );
 

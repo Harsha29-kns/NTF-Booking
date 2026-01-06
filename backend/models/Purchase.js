@@ -8,6 +8,13 @@ const purchaseSchema = new mongoose.Schema({
     unique: true
   },
   
+  // MERGED: Ticket ID (Number to match Smart Contract, Unique to prevent duplicates)
+  ticketId: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+
   // Link to Registered User (New for Online Booking)
   buyerUser: {
     type: mongoose.Schema.Types.ObjectId,
@@ -16,10 +23,6 @@ const purchaseSchema = new mongoose.Schema({
   },
   
   // On-chain data
-  ticketId: {
-    type: Number,
-    required: true
-  },
   contractAddress: {
     type: String,
     required: true,
@@ -36,7 +39,7 @@ const purchaseSchema = new mongoose.Schema({
     lowercase: true
   },
   price: {
-    type: String, // Store as string to handle large numbers
+    type: String, // Store as string to handle large numbers (Wei)
     required: true
   },
   
@@ -103,7 +106,7 @@ const purchaseSchema = new mongoose.Schema({
     default: null
   },
   
-  // Buyer information (Legacy/Offline support - now optional)
+  // MERGED: Buyer information (Legacy/Offline support)
   buyerInfo: {
     name: {
       type: String,
