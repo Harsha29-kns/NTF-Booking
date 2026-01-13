@@ -15,13 +15,13 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
     struct Ticket {
         uint256 ticketId;
         string eventName;
-        string organizer;
+        string organizer; // Display name
         uint256 eventDate;
         uint256 saleEndDate;
         uint256 price;
         string posterUrl;
         string ticketImageUrl;
-        address seller;
+        address seller;   // THIS IS THE ORGANIZER WALLET ADDRESS
         address buyer;
         bool isSold;
         bool isDownloaded;
@@ -62,6 +62,13 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         address indexed buyer,
         uint256 refundAmount
     );
+
+    event TicketTransferred(
+        uint256 indexed ticketId,
+        address indexed from,
+        address indexed to,
+        address executedBy
+    );
     
     constructor() ERC721("ConcertTicket", "TICKET") {}
     
@@ -99,7 +106,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
             price: price,
             posterUrl: string(abi.encodePacked("ipfs://", posterCID)),
             ticketImageUrl: string(abi.encodePacked("ipfs://", ticketCID)),
-            seller: msg.sender,
+            seller: msg.sender, // Organizer Wallet Address
             buyer: address(0),
             isSold: false,
             isDownloaded: false,
@@ -113,7 +120,6 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         emit TicketCreated(ticketId, eventName, msg.sender, price, eventDate);
     }
     
-    // --- UPDATED FUNCTION: Immediate Payment ---
     function buyTicket(uint256 ticketId) external payable whenNotPaused nonReentrant {
         Ticket storage ticket = tickets[ticketId];
         
@@ -123,7 +129,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         require(msg.value == ticket.price, "Incorrect payment amount");
         require(ticket.availableTickets > 0, "No tickets available");
         
-        // --- NEW: Send money to organizer immediately ---
+        // Send money to organizer immediately
         payable(ticket.seller).transfer(msg.value);
 
         // Create a new ticket instance for this purchase
@@ -139,7 +145,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
             price: ticket.price,
             posterUrl: ticket.posterUrl,
             ticketImageUrl: ticket.ticketImageUrl,
-            seller: ticket.seller,
+            seller: ticket.seller, // Keeps original organizer address
             buyer: msg.sender,
             isSold: true,
             isDownloaded: false,
@@ -156,7 +162,6 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         emit TicketPurchased(newTicketId, msg.sender, ticket.price);
     }
     
-    // --- UPDATED FUNCTION: No payment on download ---
     function downloadTicket(uint256 ticketId) external whenNotPaused nonReentrant {
         Ticket storage ticket = tickets[ticketId];
         
@@ -169,25 +174,80 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         // Mint NFT to buyer
         _safeMint(msg.sender, ticketId);
         
-        // Update status (NO TRANSFER HERE ANYMORE)
         ticket.isDownloaded = true;
-        // payable(ticket.seller).transfer(ticket.price);  <-- REMOVED
         
         emit TicketDownloaded(ticketId, msg.sender);
     }
     
+    // --- UPDATED: Admin Transfer (Now DECENTRALIZED for Organizers) ---
+    // Removed 'onlyOwner' modifier. Added check for 'ticket.seller'.
+    function adminTransferTicket(address from, address to, uint256 ticketId) external whenNotPaused nonReentrant {
+        require(to != address(0), "Cannot transfer to zero address");
+        
+        Ticket storage ticket = tickets[ticketId];
+        require(ticket.ticketId != 0, "Ticket does not exist");
+        
+        // ✅ SECURITY FIX: Allow Contract Owner OR Event Organizer (Seller)
+        require(
+            msg.sender == owner() || msg.sender == ticket.seller, 
+            "Not authorized: Only Organizer or Admin can transfer"
+        );
+
+        // If the ticket is minted (downloaded), 'ownerOf' must match 'from'
+        if(ticket.isDownloaded) {
+             require(ownerOf(ticketId) == from, "Sender is not ticket owner");
+        } else {
+             // If not minted yet, we just check our internal record
+             require(ticket.buyer == from, "Sender is not ticket buyer");
+        }
+        
+        require(!ticket.isRefunded, "Cannot transfer refunded ticket");
+
+        // 1. Update Internal Mappings for 'from' (Sender)
+        userHasPurchased[from][ticketId] = false;
+        _removeTicketFromUserList(from, ticketId);
+
+        // 2. Update Internal Mappings for 'to' (Receiver)
+        userHasPurchased[to][ticketId] = true;
+        userPurchases[to].push(ticketId);
+
+        // 3. Update Ticket Struct Data
+        ticket.buyer = to;
+        ticket.isDownloaded = false; // Reset download status so new user can claim/get new QR
+
+        // 4. Perform NFT Transfer if it was already minted
+        if(_exists(ticketId)) {
+            _transfer(from, to, ticketId);
+        }
+
+        emit TicketTransferred(ticketId, from, to, msg.sender);
+    }
+
+    // Helper to remove ticket ID from user array
+    function _removeTicketFromUserList(address user, uint256 ticketId) private {
+        uint256[] storage userList = userPurchases[user];
+        for (uint256 i = 0; i < userList.length; i++) {
+            if (userList[i] == ticketId) {
+                userList[i] = userList[userList.length - 1];
+                userList.pop();
+                break;
+            }
+        }
+    }
+
     function verifyTicket(uint256 ticketId) external view returns (bool isValid) {
         Ticket memory ticket = tickets[ticketId];
         
         if (ticket.ticketId == 0) return false;
         if (!ticket.isDownloaded) return false;
         if (ticket.isRefunded) return false;
+        
+        // Check ownership against the NFT owner
         if (ownerOf(ticketId) != msg.sender) return false;
         
         return true;
     }
     
-    // --- UPDATED FUNCTION: Refunds Disabled ---
     function updateExpiredTickets() external whenNotPaused nonReentrant {
         uint256 totalTickets = _ticketIdCounter.current();
         
@@ -201,7 +261,6 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
                 
                 if (ticket.isSold) {
                     ticket.isRefunded = true;
-                    // payable(ticket.buyer).transfer(ticket.price); <-- REMOVED (Contract has no funds)
                     emit TicketRefunded(i, ticket.buyer, ticket.price);
                 }
             }
@@ -245,13 +304,25 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         return userTickets;
     }
     
+    // --- UPDATED: Allow Organizer to Transfer ---
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 tokenId,
         uint256 batchSize
     ) internal override {
-        require(from == address(0) || to == address(0), "Tickets are non-transferable");
+        // Allow transfer if it's Minting (from 0), Burning (to 0), 
+        // OR if the ADMIN (owner) is doing it, 
+        // OR if the ORGANIZER (ticket.seller) is doing it.
+        
+        // Note: We access tickets[tokenId] to get the seller.
+        require(
+            from == address(0) || 
+            to == address(0) || 
+            msg.sender == owner() || 
+            msg.sender == tickets[tokenId].seller, 
+            "Tickets are non-transferable"
+        );
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
     
@@ -275,6 +346,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         Ticket storage ticket = tickets[ticketId];
         
         require(ticket.ticketId != 0, "Ticket does not exist");
+        // Check if caller is Organizer or Admin
         require(msg.sender == ticket.seller || msg.sender == owner(), "Not authorized");
         require(newTotalTickets > 0, "Total tickets must be greater than 0");
         

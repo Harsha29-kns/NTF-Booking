@@ -1,9 +1,8 @@
-
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
-// Create axios instance
+// 1. Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -11,7 +10,7 @@ const api = axios.create({
   }
 });
 
-// Add token to requests if available
+// 2. Add token to requests if available
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
@@ -19,19 +18,10 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-// Public user lookup
-  getUserByWallet: async (walletAddress) => {
-    try {
-      const response = await api.get(`/auth/user/${walletAddress}`);
-      return response.data;
-    } catch (error) {
-      console.warn("Could not fetch username:", error);
-      return { username: 'Unknown' };
-    }
-  }
 
+// 3. Define the Service Object
 const apiService = {
-  // Auth Services
+  // --- Auth Services ---
   setToken: (token) => {
     if (token) {
       localStorage.setItem('authToken', token);
@@ -68,7 +58,7 @@ const apiService = {
         walletAddress,
         signature,
         message,
-        ...userData // This contains username, email, isOrganizer, etc.
+        ...userData 
       });
       return response.data;
     } catch (error) {
@@ -76,7 +66,18 @@ const apiService = {
     }
   },
 
-  // User Services
+  // --- User Services ---
+  // ✅ FIXED: Moved inside the object
+  getUserByWallet: async (walletAddress) => {
+    try {
+      const response = await api.get(`/auth/user/${walletAddress}`);
+      return response.data;
+    } catch (error) {
+      console.warn("Could not fetch username:", error);
+      return { username: 'Unknown' };
+    }
+  },
+
   getProfile: async () => {
     try {
       const response = await api.get('/users/profile');
@@ -97,7 +98,6 @@ const apiService = {
 
   becomeOrganizer: async (organizerData) => {
     try {
-      // Assuming you have a specific route or use updateProfile
       const response = await api.put('/users/profile', {
         isOrganizer: true,
         organizerInfo: organizerData
@@ -107,8 +107,11 @@ const apiService = {
       throw error.response?.data || error;
     }
   }
-  
 };
 
-// CRITICAL: This default export fixes your "does not provide an export named 'default'" error
+// 4. Exports
+// Export 'api' as a named export (Fixes "api.get is not a function")
+export { api }; 
+
+// Export 'apiService' as default
 export default apiService;

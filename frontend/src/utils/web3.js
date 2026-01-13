@@ -407,3 +407,20 @@ export async function isCircuitBreakerOpen() {
   }
 }
 
+/**
+ * Execute admin transfer of ticket (Verified Gift)
+ * @param {string} from - Sender address
+ * @param {string} to - Receiver address
+ * @param {string|number} ticketId - Ticket ID
+ * @returns {Promise<ethers.TransactionResponse>} - Transaction response
+ */
+export async function executeAdminTransfer(from, to, ticketId) {
+  const contract = await getContract();
+  try {
+    const tx = await contract.adminTransferTicket(from, to, ticketId);
+    return tx;
+  } catch (error) {
+    console.error("Admin transfer failed:", error);
+    throw error;
+  }
+}

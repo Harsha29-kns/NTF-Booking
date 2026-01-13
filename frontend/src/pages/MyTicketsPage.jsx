@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useWeb3 } from '../contexts/Web3Context';
-import { getContract, formatETH, formatAddress } from '../utils/web3'; // CHANGED: Imported getContract
+import { getContract, formatAddress } from '../utils/web3';
 import { getIPFSUrl } from '../utils/ipfs';
+import { api } from '../services/api'; // NEW: Import API service
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
@@ -11,17 +12,29 @@ import {
   Shield,
   Loader2,
   Ticket,
-  Eye,
-  CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Send,      // NEW
+  X,         // NEW
+  Clock      // NEW
 } from 'lucide-react';
 
 const MyTicketsPage = () => {
-  const { account, isConnected, isSupportedNetwork } = useWeb3();
+  const { account, isConnected } = useWeb3();
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // --- NEW STATE: Transfer Feature ---
+  const [pendingTicketIds, setPendingTicketIds] = useState(new Set());
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [transferForm, setTransferForm] = useState({
+    receiverAddress: '',
+    reason: ''
+  });
+  const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+
+  // Load Tickets from Blockchain
   const loadMyTickets = useCallback(async () => {
     if (!account) return;
 
@@ -29,33 +42,43 @@ const MyTicketsPage = () => {
       setIsLoading(true);
       setError(null);
       
-      // FIX: Use getContract() instead of getContractReadOnly()
-      // This ensures 'msg.sender' is YOUR wallet address, not an anonymous provider
       const contract = await getContract();
       
-      console.log('Fetching tickets for account:', account);
-      
-      // Get tickets purchased by current user
+      // 1. Get blockchain tickets
       let myTicketIdsResult;
       try {
         myTicketIdsResult = await contract.getMyTickets();
       } catch (error) {
-        console.warn('Error fetching tickets (user might have none):', error.message);
+        console.warn('Error fetching tickets:', error.message);
         setTickets([]);
         return;
       }
       
-      // Convert result to array safely
       const myTicketIds = Array.from(myTicketIdsResult || []);
       
-      console.log('Ticket IDs found:', myTicketIds.toString());
-      
+      // 2. NEW: Fetch Pending Transfer Requests from Backend
+      // We need to know which tickets have a request "Processing" so we can disable the button
+      let pendingIds = new Set();
+      try {
+        const { data: requests } = await api.get('/transfers/my-requests');
+        // Assuming API returns array of requests with status 'pending'
+        requests.forEach(req => {
+          if (req.status === 'pending') {
+            pendingIds.add(req.ticketId.toString());
+          }
+        });
+        setPendingTicketIds(pendingIds);
+      } catch (err) {
+        console.warn('Failed to fetch pending transfers:', err);
+        // Don't block the UI, just proceed without pending status
+      }
+
       if (myTicketIds.length === 0) {
         setTickets([]);
         return;
       }
       
-      // Fetch details for each ticket
+      // 3. Fetch details for each ticket
       const ticketPromises = myTicketIds.map(async (ticketId) => {
         try {
           const ticket = await contract.getTicket(ticketId);
@@ -84,7 +107,6 @@ const MyTicketsPage = () => {
       const ticketData = await Promise.all(ticketPromises);
       const validTickets = ticketData.filter(ticket => ticket !== null);
       
-      // Sort by newest first
       setTickets(validTickets.reverse());
       
     } catch (error) {
@@ -103,15 +125,48 @@ const MyTicketsPage = () => {
     }
   }, [isConnected, account, loadMyTickets]);
 
-  // Listen for global updates
-  useEffect(() => {
-    const handler = (e) => {
-      console.log('Global ticket update detected, reloading...');
+  // --- NEW HANDLERS: Transfer Feature ---
+
+  const openTransferModal = (ticket) => {
+    setSelectedTicket(ticket);
+    setTransferForm({ receiverAddress: '', reason: '' });
+    setShowTransferModal(true);
+  };
+
+  const handleTransferSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTicket) return;
+
+    try {
+      setIsSubmittingTransfer(true);
+      
+      // Validate Address (Basic check)
+      if (!transferForm.receiverAddress.startsWith('0x') || transferForm.receiverAddress.length !== 42) {
+        toast.error("Invalid Ethereum address format");
+        return;
+      }
+
+      // Call Backend API to create request
+      await api.post('/transfers/request', {
+        ticketId: selectedTicket.id,
+        receiverAddress: transferForm.receiverAddress,
+        reason: transferForm.reason,
+        eventName: selectedTicket.metadata?.name || selectedTicket.name || selectedTicket.eventName || "Event Name"
+      });
+
+      toast.success("Transfer request submitted! Waiting for organizer approval.");
+      setShowTransferModal(false);
+      
+      // Refresh list to show "Pending" status
       loadMyTickets();
-    };
-    window.addEventListener('ticketsUpdated', handler);
-    return () => window.removeEventListener('ticketsUpdated', handler);
-  }, [loadMyTickets]);
+
+    } catch (error) {
+      console.error("Transfer request failed:", error);
+      toast.error(error.response?.data?.message || "Failed to submit transfer request");
+    } finally {
+      setIsSubmittingTransfer(false);
+    }
+  };
 
   const formatDate = (date) => {
     return date.toLocaleDateString('en-US', {
@@ -124,6 +179,10 @@ const MyTicketsPage = () => {
   };
 
   const getTicketStatus = (ticket) => {
+    // Check pending state first
+    if (pendingTicketIds.has(ticket.id)) {
+      return { text: 'Transfer Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock };
+    }
     if (ticket.isRefunded) return { text: 'Refunded', color: 'bg-red-100 text-red-800' };
     if (ticket.isDownloaded) return { text: 'Downloaded (NFT)', color: 'bg-green-100 text-green-800' };
     if (ticket.isSold) return { text: 'Purchased', color: 'bg-blue-100 text-blue-800' };
@@ -150,7 +209,7 @@ const MyTicketsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Tickets</h1>
@@ -184,6 +243,8 @@ const MyTicketsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tickets.map((ticket) => {
             const status = getTicketStatus(ticket);
+            const isPending = pendingTicketIds.has(ticket.id);
+
             return (
               <div key={ticket.id} className="card group hover:shadow-lg transition-all duration-300">
                 {/* Image */}
@@ -196,7 +257,8 @@ const MyTicketsPage = () => {
                       e.target.src = 'https://images.unsplash.com/photo-1459749411177-2c46996b3e81?auto=format&fit=crop&q=80';
                     }}
                   />
-                  <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-bold ${status.color}`}>
+                  <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 ${status.color}`}>
+                    {status.icon && <status.icon className="w-3 h-3" />}
                     {status.text}
                   </div>
                 </div>
@@ -217,28 +279,48 @@ const MyTicketsPage = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-3 border-t border-gray-100">
-                    <Link 
-                      to={`/ticket/${ticket.id}`} 
-                      className="flex-1 btn-outline text-center text-sm py-2"
-                    >
-                      View
-                    </Link>
-                    
-                    {!ticket.isDownloaded ? (
-                      <Link 
+                  <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
+                    <div className="flex gap-2">
+                        <Link 
                         to={`/ticket/${ticket.id}`} 
-                        className="flex-1 btn-primary text-center text-sm py-2 flex items-center justify-center gap-1"
-                      >
-                        <Download className="w-3 h-3" /> Download
-                      </Link>
-                    ) : (
-                      <Link 
-                        to={`/ticket/${ticket.id}/print`} 
-                        className="flex-1 btn-secondary text-center text-sm py-2 flex items-center justify-center gap-1"
-                      >
-                        <Shield className="w-3 h-3" /> Print
-                      </Link>
+                        className="flex-1 btn-outline text-center text-sm py-2"
+                        >
+                        View
+                        </Link>
+                        
+                        {!ticket.isDownloaded && !isPending ? (
+                        <Link 
+                            to={`/ticket/${ticket.id}`} 
+                            className="flex-1 btn-primary text-center text-sm py-2 flex items-center justify-center gap-1"
+                        >
+                            <Download className="w-3 h-3" /> Download
+                        </Link>
+                        ) : ticket.isDownloaded ? (
+                        <Link 
+                            to={`/ticket/${ticket.id}/print`} 
+                            className="flex-1 btn-secondary text-center text-sm py-2 flex items-center justify-center gap-1"
+                        >
+                            <Shield className="w-3 h-3" /> Print
+                        </Link>
+                        ) : (
+                             // Pending state button placeholder if needed, or just keep View
+                             <span className="hidden"></span>
+                        )}
+                    </div>
+                    
+                    {/* NEW: Transfer Button */}
+                    {!isPending && !ticket.isRefunded && (
+                        <button
+                          onClick={() => openTransferModal(ticket)}
+                          className="w-full text-xs text-gray-500 hover:text-primary-600 flex items-center justify-center gap-1 py-1 border border-transparent hover:border-gray-200 rounded transition-colors"
+                        >
+                          <Send className="w-3 h-3" /> Transfer / Gift Ticket
+                        </button>
+                    )}
+                    {isPending && (
+                        <div className="text-center text-xs text-yellow-600 font-medium py-1">
+                            Transfer Request Under Review
+                        </div>
                     )}
                   </div>
                 </div>
@@ -247,6 +329,89 @@ const MyTicketsPage = () => {
           })}
         </div>
       )}
+
+      {/* --- NEW: Transfer Modal --- */}
+      {showTransferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Transfer Ticket</h3>
+              <button 
+                onClick={() => setShowTransferModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleTransferSubmit} className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 mb-4">
+                <p className="font-semibold">Requesting transfer for: {selectedTicket?.eventName}</p>
+                <p className="mt-1 text-xs opacity-80">
+                  This request will be sent to the organizer for approval. 
+                  Once approved, the ticket will be moved to the new wallet address.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Receiver Wallet Address (0x...)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="0x..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                  value={transferForm.receiverAddress}
+                  onChange={(e) => setTransferForm({...transferForm, receiverAddress: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Transfer
+                </label>
+                <textarea
+                  required
+                  rows="3"
+                  placeholder="e.g. Cannot attend due to illness, Gift for a friend..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all resize-none"
+                  value={transferForm.reason}
+                  onChange={(e) => setTransferForm({...transferForm, reason: e.target.value})}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTransferModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingTransfer}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingTransfer ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Submit Request
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

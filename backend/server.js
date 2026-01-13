@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const eventRoutes = require('./routes/events');
 const purchaseRoutes = require('./routes/purchases');
+const transferRoutes = require('./routes/transfers'); // NEW: Import transfer routes
 const { startEventIndexer } = require('./services/eventIndexer');
 
 const app = express();
@@ -52,6 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/transfers', transferRoutes); // NEW: Register transfer endpoint
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -132,4 +134,3 @@ process.on('SIGINT', async () => {
 startServer().catch(console.error);
 
 module.exports = app;
-

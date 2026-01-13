@@ -14,6 +14,7 @@ import MyTicketsPage from './pages/MyTicketsPage';
 import PrintTicketPage from './pages/PrintTicketPage';
 import TestCreatePage from './pages/TestCreatePage';
 import ProfilePage from './pages/ProfilePage';
+import AdminTransferRequests from './pages/AdminTransferRequests';
 import './index.css';
 
 // Component to protect routes based on role
@@ -58,6 +59,7 @@ function App() {
                 <Route path="/verify" element={<VerifyTicketPage />} />
                 <Route path="/my-tickets" element={<MyTicketsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/admin/transfers" element={<AdminTransferRequests />} />
                 
                 {/* Protected Organizer Routes */}
                 <Route 

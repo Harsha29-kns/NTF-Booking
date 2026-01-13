@@ -17,7 +17,7 @@ import {
   UserCircle,
   Menu,
   X,
-  ChevronDown
+  ArrowRightLeft // <--- Added Icon for Transfers
 } from 'lucide-react';
 import contractInfo from '../contracts/TicketSale.json';
 
@@ -29,7 +29,7 @@ const Layout = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Handle Scroll Effect
+  // Handle Scroll Effect for Sticky Header
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -38,7 +38,7 @@ const Layout = ({ children }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch ETH Balance
+  // Fetch ETH Balance periodically
   useEffect(() => {
     const fetchBalance = async () => {
       if (isConnected && account && window.ethereum) {
@@ -57,7 +57,7 @@ const Layout = ({ children }) => {
     return () => clearInterval(interval);
   }, [isConnected, account]);
 
-  // Dynamic navigation
+  // Dynamic navigation based on auth state
   const getNavigation = () => {
     const navItems = [
       { name: 'Home', href: '/', icon: Home },
@@ -70,6 +70,10 @@ const Layout = ({ children }) => {
 
       if (user?.isOrganizer) {
         navItems.push({ name: 'Create Sale', href: '/create-sale', icon: Plus });
+        
+        // --- NEW LINK ADDED HERE ---
+        navItems.push({ name: 'Manage Transfers', href: '/admin/transfers', icon: ArrowRightLeft });
+        
         navItems.push({ name: 'Verify Ticket', href: '/admin/verify', icon: Shield }); 
       } else {
         navItems.push({ name: 'Verify Ticket', href: '/verify', icon: Shield }); 
@@ -86,6 +90,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
+      {/* Registration Modal Component */}
       <RegisterModal />
 
       {/* --- Sticky Header --- */}
@@ -160,7 +165,8 @@ const Layout = ({ children }) => {
                       
                       <Link to="/profile" className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition-colors">
                          <div className="w-5 h-5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">
-                            {user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-3 h-3" />}
+                           {/* FIXED: User name display */}
+                           {user?.username ? user.username.charAt(0).toUpperCase() : <User className="w-3 h-3" />}
                          </div>
                          <span className="text-xs font-medium text-gray-600 font-mono">
                            {formatAddress(account)}
