@@ -26,12 +26,17 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         bool isSold;
         bool isDownloaded;
         bool isRefunded;
+        // ✅ NEW: Track if ticket has been transferred once
+        bool isSecondHand; 
         uint256 totalTickets;
         uint256 availableTickets;
     }
     
     mapping(uint256 => Ticket) public tickets;
+    
+    // ✅ ACTIVE: Tracks if a user currently holds a ticket for a specific event name
     mapping(address => mapping(string => bool)) public hasBoughtTicketForEvent;
+    
     mapping(string => uint256) public eventToTicketId;
     
     // Track user purchases
@@ -111,6 +116,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
             isSold: false,
             isDownloaded: false,
             isRefunded: false,
+            isSecondHand: false, // ✅ Initialize as false
             totalTickets: totalTickets,
             availableTickets: totalTickets
         });
@@ -128,6 +134,9 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         require(block.timestamp <= ticket.saleEndDate, "Sale has ended");
         require(msg.value == ticket.price, "Incorrect payment amount");
         require(ticket.availableTickets > 0, "No tickets available");
+        
+        // ✅ NEW CHECK: Enforce 1 Ticket Per Wallet Policy
+        require(!hasBoughtTicketForEvent[msg.sender][ticket.eventName], "You already have a ticket for this event");
         
         // Send money to organizer immediately
         payable(ticket.seller).transfer(msg.value);
@@ -150,6 +159,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
             isSold: true,
             isDownloaded: false,
             isRefunded: false,
+            isSecondHand: false, // ✅ Initialize as false
             totalTickets: 1, 
             availableTickets: 0 
         });
@@ -158,6 +168,9 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         
         userPurchases[msg.sender].push(newTicketId);
         userHasPurchased[msg.sender][newTicketId] = true;
+        
+        // ✅ UPDATE: Mark user as having a ticket
+        hasBoughtTicketForEvent[msg.sender][ticket.eventName] = true;
         
         emit TicketPurchased(newTicketId, msg.sender, ticket.price);
     }
@@ -187,6 +200,9 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         Ticket storage ticket = tickets[ticketId];
         require(ticket.ticketId != 0, "Ticket does not exist");
         
+        // ✅ NEW CHECK: Enforce One-Time Transfer Policy
+        require(!ticket.isSecondHand, "Ticket has already been transferred once");
+
         // ✅ SECURITY FIX: Allow Contract Owner OR Event Organizer (Seller)
         require(
             msg.sender == owner() || msg.sender == ticket.seller, 
@@ -202,18 +218,28 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         }
         
         require(!ticket.isRefunded, "Cannot transfer refunded ticket");
+        
+        // ✅ NEW CHECK: Receiver cannot already have a ticket for this event
+        require(!hasBoughtTicketForEvent[to][ticket.eventName], "Receiver already has a ticket for this event");
 
         // 1. Update Internal Mappings for 'from' (Sender)
         userHasPurchased[from][ticketId] = false;
         _removeTicketFromUserList(from, ticketId);
+        
+        // ✅ UPDATE: Sender no longer has a ticket, they can buy again
+        hasBoughtTicketForEvent[from][ticket.eventName] = false;
 
         // 2. Update Internal Mappings for 'to' (Receiver)
         userHasPurchased[to][ticketId] = true;
         userPurchases[to].push(ticketId);
+        
+        // ✅ UPDATE: Receiver now has a ticket, they cannot buy another
+        hasBoughtTicketForEvent[to][ticket.eventName] = true;
 
         // 3. Update Ticket Struct Data
         ticket.buyer = to;
         ticket.isDownloaded = false; // Reset download status so new user can claim/get new QR
+        ticket.isSecondHand = true;  // ✅ Mark as transferred (Second Hand)
 
         // 4. Perform NFT Transfer if it was already minted
         if(_exists(ticketId)) {
@@ -261,6 +287,8 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
                 
                 if (ticket.isSold) {
                     ticket.isRefunded = true;
+                    // ✅ UPDATE: If refunded/expired, reset flag so user can potentially buy again (e.g. if re-listed)
+                    hasBoughtTicketForEvent[ticket.buyer][ticket.eventName] = false;
                     emit TicketRefunded(i, ticket.buyer, ticket.price);
                 }
             }

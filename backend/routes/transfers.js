@@ -32,6 +32,19 @@ router.post('/request', auth, async (req, res) => {
       return res.status(400).json({ message: 'A transfer request is already pending for this ticket' });
     }
 
+    // ✅ NEW CHECK: Enforce One-Time Transfer Policy
+    // Check if this ticket has EVER been successfully transferred before
+    const previousTransfer = await TransferRequest.findOne({
+      ticketId: ticketId.toString(),
+      status: 'approved'
+    });
+
+    if (previousTransfer) {
+      return res.status(400).json({ 
+        message: 'This ticket has already been transferred once. Multiple transfers are not allowed.' 
+      });
+    }
+
     // 3. Create Request
     const newRequest = new TransferRequest({
       ticketId: ticketId.toString(),

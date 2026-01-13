@@ -19,7 +19,8 @@ import {
   Loader2,
   ArrowLeft,
   CheckCircle,
-  XCircle
+  XCircle,
+  AlertCircle // ✅ NEW: Import Alert Icon
 } from 'lucide-react';
 
 const TicketDetailPage = () => {
@@ -34,6 +35,9 @@ const TicketDetailPage = () => {
   const [verificationResult, setVerificationResult] = useState(null);
   const [error, setError] = useState(null);
   const [lastTransactionHash, setLastTransactionHash] = useState(null);
+  
+  // ✅ NEW: State to track if user already owns this ticket
+  const [hasBought, setHasBought] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -45,7 +49,7 @@ const TicketDetailPage = () => {
       const contract = getContractReadOnly();
       contract.removeAllListeners('TicketPurchased');
     };
-  }, [id]);
+  }, [id, account]); // ✅ Added account dependency to reload ownership status
 
   const setupRealTimeListener = () => {
     try {
@@ -96,9 +100,21 @@ const TicketDetailPage = () => {
         isSold: ticketData.isSold,
         isDownloaded: ticketData.isDownloaded,
         isRefunded: ticketData.isRefunded,
+        isSecondHand: ticketData.isSecondHand,
         totalTickets: Number(ticketData.totalTickets),
         availableTickets: Number(ticketData.availableTickets),
       });
+
+      // ✅ NEW: Check if current user already owns a ticket for this event
+      if (account && ticketData.eventName) {
+        try {
+          // Calls the new mapping: mapping(address => mapping(string => bool))
+          const alreadyOwns = await contract.hasBoughtTicketForEvent(account, ticketData.eventName);
+          setHasBought(alreadyOwns);
+        } catch (err) {
+          console.warn("Failed to check ticket ownership:", err);
+        }
+      }
 
       // Try to get transaction hash from contract events
       await loadTransactionHash();
@@ -138,6 +154,12 @@ const TicketDetailPage = () => {
   const handlePurchase = async () => {
     if (!isConnected || !isSupportedNetwork) {
       toast.error('Please connect your wallet and switch to the correct network');
+      return;
+    }
+
+    // ✅ NEW: Prevent purchase if already bought
+    if (hasBought) {
+      toast.error("You already have a ticket for this event!");
       return;
     }
 
@@ -200,7 +222,12 @@ const TicketDetailPage = () => {
       
     } catch (error) {
       console.error('Error purchasing ticket:', error);
-      toast.error(error.message || 'Failed to purchase ticket');
+      // ✅ Handle the specific revert error
+      if (error.message.includes("You already have a ticket")) {
+          toast.error("You already own a ticket for this event!");
+      } else {
+          toast.error(error.message || 'Failed to purchase ticket');
+      }
     } finally {
       setIsPurchasing(false);
     }
@@ -297,8 +324,15 @@ const TicketDetailPage = () => {
     return ticket.seller && account && ticket.seller.toLowerCase() === account.toLowerCase();
   };
 
+  // ✅ UPDATED: Include hasBought check
   const canPurchase = () => {
-    return isConnected && isSupportedNetwork && isSaleActive() && !ticket.isSold && !ticket.isRefunded && Number(ticket.availableTickets || 0) > 0;
+    return isConnected && 
+           isSupportedNetwork && 
+           isSaleActive() && 
+           !ticket.isSold && 
+           !ticket.isRefunded && 
+           Number(ticket.availableTickets || 0) > 0 &&
+           !hasBought; // Must not have bought a ticket already
   };
 
   const canDownload = () => {
@@ -463,6 +497,17 @@ const TicketDetailPage = () => {
                 </div>
               )}
               
+              {ticket.isSold && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Transfer Status:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    ticket.isSecondHand ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {ticket.isSecondHand ? 'Non-Transferable (Limit Reached)' : 'Transferable'}
+                  </span>
+                </div>
+              )}
+              
               {ticket.isRefunded && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Refund Status:</span>
@@ -470,6 +515,16 @@ const TicketDetailPage = () => {
                     Refunded
                   </span>
                 </div>
+              )}
+
+              {/* ✅ NEW: Wallet Limit Warning */}
+              {hasBought && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                      <div className="text-sm text-yellow-800">
+                          <span className="font-semibold">Wallet Limit Reached:</span> You already own a ticket for <strong>{ticket.eventName}</strong>. You cannot buy another one unless you transfer your existing ticket.
+                      </div>
+                  </div>
               )}
             </div>
           </div>
@@ -498,6 +553,14 @@ const TicketDetailPage = () => {
                     </>
                   )}
                 </button>
+              )}
+
+              {/* ✅ NEW: Disabled Button for Limit Reached */}
+              {hasBought && !ticket.isSold && (
+                  <button disabled className="w-full bg-gray-100 text-gray-400 border border-gray-200 font-medium py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
+                      <ShoppingCart className="w-5 h-5" />
+                      <span>Limit Reached (1 Per Wallet)</span>
+                  </button>
               )}
 
               {/* Download Button */}

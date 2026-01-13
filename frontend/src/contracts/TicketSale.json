@@ -539,6 +539,11 @@
               "type": "bool"
             },
             {
+              "internalType": "bool",
+              "name": "isSecondHand",
+              "type": "bool"
+            },
+            {
               "internalType": "uint256",
               "name": "totalTickets",
               "type": "uint256"
@@ -872,6 +877,11 @@
           "type": "bool"
         },
         {
+          "internalType": "bool",
+          "name": "isSecondHand",
+          "type": "bool"
+        },
+        {
           "internalType": "uint256",
           "name": "totalTickets",
           "type": "uint256"
@@ -1030,5 +1040,5 @@
     }
   ],
   "network": "localhost",
-  "deployedAt": "2026-01-12T16:08:12.076Z"
+  "deployedAt": "2026-01-13T15:07:26.229Z"
 }

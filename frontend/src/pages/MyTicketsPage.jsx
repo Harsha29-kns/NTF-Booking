@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useWeb3 } from '../contexts/Web3Context';
 import { getContract, formatAddress } from '../utils/web3';
 import { getIPFSUrl } from '../utils/ipfs';
-import { api } from '../services/api'; // NEW: Import API service
+import { api } from '../services/api'; 
 import toast from 'react-hot-toast';
 import { 
   Calendar, 
@@ -13,9 +13,10 @@ import {
   Loader2,
   Ticket,
   RefreshCw,
-  Send,      // NEW
-  X,         // NEW
-  Clock      // NEW
+  Send,      
+  X,         
+  Clock,     
+  ArrowRight // ✅ NEW: Added ArrowRight icon
 } from 'lucide-react';
 
 const MyTicketsPage = () => {
@@ -56,12 +57,10 @@ const MyTicketsPage = () => {
       
       const myTicketIds = Array.from(myTicketIdsResult || []);
       
-      // 2. NEW: Fetch Pending Transfer Requests from Backend
-      // We need to know which tickets have a request "Processing" so we can disable the button
+      // 2. Fetch Pending Transfer Requests from Backend
       let pendingIds = new Set();
       try {
         const { data: requests } = await api.get('/transfers/my-requests');
-        // Assuming API returns array of requests with status 'pending'
         requests.forEach(req => {
           if (req.status === 'pending') {
             pendingIds.add(req.ticketId.toString());
@@ -70,7 +69,6 @@ const MyTicketsPage = () => {
         setPendingTicketIds(pendingIds);
       } catch (err) {
         console.warn('Failed to fetch pending transfers:', err);
-        // Don't block the UI, just proceed without pending status
       }
 
       if (myTicketIds.length === 0) {
@@ -95,6 +93,9 @@ const MyTicketsPage = () => {
             isSold: ticket.isSold,
             isDownloaded: ticket.isDownloaded,
             isRefunded: ticket.isRefunded,
+            // ✅ Read updated transfer fields
+            isSecondHand: ticket.isSecondHand, 
+            previousOwner: ticket.previousOwner, // ✅ Get previous owner
             totalTickets: Number(ticket.totalTickets),
             availableTickets: Number(ticket.availableTickets),
           };
@@ -125,7 +126,7 @@ const MyTicketsPage = () => {
     }
   }, [isConnected, account, loadMyTickets]);
 
-  // --- NEW HANDLERS: Transfer Feature ---
+  // --- HANDLERS ---
 
   const openTransferModal = (ticket) => {
     setSelectedTicket(ticket);
@@ -140,13 +141,11 @@ const MyTicketsPage = () => {
     try {
       setIsSubmittingTransfer(true);
       
-      // Validate Address (Basic check)
       if (!transferForm.receiverAddress.startsWith('0x') || transferForm.receiverAddress.length !== 42) {
         toast.error("Invalid Ethereum address format");
         return;
       }
 
-      // Call Backend API to create request
       await api.post('/transfers/request', {
         ticketId: selectedTicket.id,
         receiverAddress: transferForm.receiverAddress,
@@ -156,8 +155,6 @@ const MyTicketsPage = () => {
 
       toast.success("Transfer request submitted! Waiting for organizer approval.");
       setShowTransferModal(false);
-      
-      // Refresh list to show "Pending" status
       loadMyTickets();
 
     } catch (error) {
@@ -179,7 +176,6 @@ const MyTicketsPage = () => {
   };
 
   const getTicketStatus = (ticket) => {
-    // Check pending state first
     if (pendingTicketIds.has(ticket.id)) {
       return { text: 'Transfer Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock };
     }
@@ -276,6 +272,14 @@ const MyTicketsPage = () => {
                       <User className="w-4 h-4 mr-2 text-gray-400" />
                       <span className="truncate">Org: {ticket.organizer}</span>
                     </div>
+
+                    {/* ✅ NEW: Display Transferred From info */}
+                    {ticket.isSecondHand && ticket.previousOwner && ticket.previousOwner !== '0x0000000000000000000000000000000000000000' && (
+                        <div className="flex items-center text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs mt-1 border border-blue-100">
+                            <ArrowRight className="w-3 h-3 mr-1" />
+                            <span className="truncate">From: {formatAddress(ticket.previousOwner)}</span>
+                        </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -303,13 +307,12 @@ const MyTicketsPage = () => {
                             <Shield className="w-3 h-3" /> Print
                         </Link>
                         ) : (
-                             // Pending state button placeholder if needed, or just keep View
                              <span className="hidden"></span>
                         )}
                     </div>
                     
-                    {/* NEW: Transfer Button */}
-                    {!isPending && !ticket.isRefunded && (
+                    {/* Transfer Button Logic */}
+                    {!isPending && !ticket.isRefunded && !ticket.isSecondHand && (
                         <button
                           onClick={() => openTransferModal(ticket)}
                           className="w-full text-xs text-gray-500 hover:text-primary-600 flex items-center justify-center gap-1 py-1 border border-transparent hover:border-gray-200 rounded transition-colors"
@@ -317,6 +320,14 @@ const MyTicketsPage = () => {
                           <Send className="w-3 h-3" /> Transfer / Gift Ticket
                         </button>
                     )}
+                    
+                    {/* Limit Reached Info */}
+                    {ticket.isSecondHand && (
+                         <div className="text-center text-xs text-gray-400 font-medium py-1">
+                             Ticket Non-Transferable (Limit Reached)
+                         </div>
+                    )}
+
                     {isPending && (
                         <div className="text-center text-xs text-yellow-600 font-medium py-1">
                             Transfer Request Under Review
@@ -330,7 +341,7 @@ const MyTicketsPage = () => {
         </div>
       )}
 
-      {/* --- NEW: Transfer Modal --- */}
+      {/* Transfer Modal */}
       {showTransferModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
