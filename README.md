@@ -1,16 +1,44 @@
-# NFT Ticketing System - Complete Setup Guide
+# NFT Ticketing System – Complete Setup Guide
 
-A complete NFT-based ticketing system built with React, Node.js, MongoDB, and Ethereum smart contracts. This system allows event organizers to create and sell NFT tickets, while users can purchase, download, and verify their tickets on the blockchain.
+A complete **NFT-based ticketing system** built with **React, Node.js, MongoDB, and Ethereum smart contracts**.  
+This system allows event organizers to create and sell NFT tickets, while users can purchase, download, transfer (once), and verify tickets on the blockchain.
+
+---
+
+## 🌟 New Features & Policies
+
+We have implemented strict enforcement policies to ensure fair usage and prevent scalping:
+
+- 🚫 **One-Time Transfer Policy**  
+  Tickets can be transferred **only once**. After the first transfer, the ticket becomes permanently locked to the new owner’s wallet and is marked as **Second Hand**.
+
+- 👤 **1 Ticket Per Wallet (Per Event)**  
+  A single wallet address can hold **only one active ticket per event**.
+
+- 🔄 **Transparent Transfer History**  
+  Transferred tickets display the **“Transferred From”** wallet address.
+
+- 🔗 **On-Chain Enforcement**  
+  All rules (transfer limits, purchase caps) are enforced **directly in the smart contract**, making them tamper-proof.
+
+- ⚡ **Auto-Sync Ownership**  
+  Backend automatically verifies real-time blockchain ownership and updates the database even if transfers occur outside the app.
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Node.js** (v16 or higher) - [Download here](https://nodejs.org/)
-- **MongoDB** (v4.4 or higher) - [Download here](https://www.mongodb.com/try/download/community) or use Docker
-- **Git** - [Download here](https://git-scm.com/)
-- **MetaMask** browser extension - [Install here](https://metamask.io/)
 
-### 1. Clone and Install
+- **Node.js** (v16 or higher)  
+- **MongoDB** (v4.4 or higher – local or Docker)  
+- **Git**  
+- **MetaMask** browser extension  
+
+---
+
+## 1️⃣ Clone & Install
+
 ```bash
 git clone <your-repository-url>
 cd nft-ticketing-system
@@ -27,7 +55,7 @@ cd ..
 cd frontend
 npm install
 cd ..
-```
+
 
 ### 2. Environment Setup
 
