@@ -1,5 +1,9 @@
 const express = require('express');
+const { ethers } = require('ethers'); // Import ethers for Wei conversion
 const GatekeeperCode = require('../models/GatekeeperCode');
+const Purchase = require('../models/Purchase');
+const EntryLog = require('../models/EntryLog');
+const Event = require('../models/Event');
 const { authenticateToken } = require('../middleware/auth');
 const { getContractReadOnly } = require('../utils/web3');
 
@@ -272,6 +276,85 @@ router.put('/gatekeeper/reset-device/:codeId', authenticateToken, async (req, re
             success: false,
             message: 'Failed to reset device binding'
         });
+    }
+});
+
+// GET /api/organizer/event-analytics/:eventName - Get comprehensive analytics (Guest List)
+router.get('/event-analytics/:eventName', authenticateToken, async (req, res) => {
+    try {
+        const { eventName } = req.params;
+        const organizerAddress = req.user.walletAddress.toLowerCase();
+
+        // 1. Verify Event Ownership
+        const event = await Event.findOne({ eventName: eventName });
+        if (!event) {
+            return res.status(404).json({ success: false, message: 'Event not found' });
+        }
+        if (event.seller.toLowerCase() !== organizerAddress) {
+            return res.status(403).json({ success: false, message: 'Not authorized for this event' });
+        }
+
+        // 2. Fetch All Purchases for this Event
+        const purchases = await Purchase.find({ eventName: eventName }).sort({ ticketId: 1 });
+
+        // 3. Fetch All Successful Entries for this Event
+        const entries = await EntryLog.find({
+            eventName: eventName,
+            scanResult: 'SUCCESS'
+        });
+
+        // Create a map of TicketID -> EntryDetails for fast lookup
+        const entryMap = {};
+        entries.forEach(entry => {
+            entryMap[entry.ticketId] = entry;
+        });
+
+        // 4. Combine Data into Guest List
+        const guestList = purchases.map(p => {
+            const entry = entryMap[p.ticketId];
+            return {
+                ticketId: p.ticketId,
+                buyerWallet: p.buyer,
+                buyerName: p.buyerInfo?.name || 'Unknown',
+                buyerPhone: p.buyerInfo?.phone || 'N/A',
+                purchaseDate: p.purchaseDate,
+                price: p.price,
+                isUsed: !!entry,
+                entryTime: entry ? entry.scanTime : null,
+                gatekeeper: entry ? entry.gatekeeperAddress : null,
+                isTransferred: p.buyer.toLowerCase() !== p.buyerInfo?.originalBuyer?.toLowerCase() // Basic check, better handled by tracking transfers
+            };
+        });
+
+        // Calculate Stats (Revenue in Wei -> ETH)
+        const totalRevenueWei = purchases.reduce((acc, curr) => {
+            return acc + (curr.price ? BigInt(curr.price) : 0n);
+        }, 0n);
+
+        const stats = {
+            totalSold: purchases.length,
+            totalEntered: entries.length,
+            revenue: ethers.formatEther(totalRevenueWei), // Convert Wei to ETH string
+            attendanceRate: purchases.length > 0 ? (entries.length / purchases.length) * 100 : 0
+        };
+
+        res.json({
+            success: true,
+            data: {
+                event: {
+                    name: event.eventName,
+                    date: event.eventDate,
+                    totalTickets: event.totalTickets,
+                    posterUrl: event.posterUrl
+                },
+                stats,
+                guests: guestList
+            }
+        });
+
+    } catch (error) {
+        console.error('Analytics error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
     }
 });
 

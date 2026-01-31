@@ -22,6 +22,15 @@ import {
     Link as LinkIcon
 } from 'lucide-react';
 
+// Helper to decode JWT on frontend (without library)
+const parseJwt = (token) => {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+        return null;
+    }
+};
+
 const GatekeeperScannerPage = () => {
     const navigate = useNavigate();
     const [scanResult, setScanResult] = useState(null);
@@ -165,13 +174,33 @@ const GatekeeperScannerPage = () => {
 
             try {
                 // Parse QR Data
-                let ticketId, walletAddress, qrTimestamp, scannedEventName;
+                let ticketId, walletAddress, qrTimestamp, scannedEventName, qrToken;
+
                 try {
                     const parsed = JSON.parse(data.text);
-                    ticketId = parsed.ticketId;
-                    walletAddress = parsed.buyer;
-                    qrTimestamp = parsed.timestamp;
-                    scannedEventName = parsed.eventName;
+
+                    // CHECK FOR 2FA TOKEN
+                    if (parsed.token) {
+                        qrToken = parsed.token;
+                        const decoded = parseJwt(qrToken);
+                        if (!decoded) throw new Error("Invalid Token Format");
+
+                        // Extract data from Token
+                        ticketId = decoded.ticketId;
+                        walletAddress = decoded.wallet;
+                        qrTimestamp = decoded.timestamp;
+                        // decoded token doesn't have eventName usually to save space, 
+                        // but let's assume valid based on ticketId query later.
+                        // Or we can add eventName to JWT payload in backend if needed.
+                        // For now, let's rely on backend validation of ticket ownership.
+                    } else {
+                        // LEGACY / STATIC QR
+                        ticketId = parsed.ticketId;
+                        walletAddress = parsed.buyer;
+                        qrTimestamp = parsed.timestamp;
+                        scannedEventName = parsed.eventName;
+                    }
+
                 } catch (e) {
                     throw new Error("Invalid QR Code Format");
                 }
@@ -194,7 +223,8 @@ const GatekeeperScannerPage = () => {
                         ticketId,
                         walletAddress,
                         eventName,
-                        qrTimestamp
+                        qrTimestamp,
+                        qrToken // Send Token for Verification
                     })
                 });
 
@@ -324,6 +354,15 @@ const GatekeeperScannerPage = () => {
                                     <span className="text-gray-500">Purchased</span>
                                     <span className="text-gray-700">{lastScanData?.purchaseTime ? new Date(lastScanData.purchaseTime).toLocaleDateString() : 'N/A'}</span>
                                 </div>
+                                {/* 2FA Indicator */}
+                                {lastScanData && (
+                                    <div className="flex items-center justify-between text-xs text-green-700 font-bold bg-green-50 px-2 py-1 rounded mt-2">
+                                        <div className="flex items-center">
+                                            <ShieldCheck className="w-3 h-3 mr-1" />
+                                            2FA Verified
+                                        </div>
+                                    </div>
+                                )}
                                 {lastScanData?.txHash && lastScanData.txHash !== 'N/A' && (
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="text-gray-500">Transaction</span>

@@ -7,11 +7,11 @@ import IPFSImage from '../components/IPFSImage';
 import TicketQuantityManager from '../components/TicketQuantityManager';
 import contractInfo from '../contracts/TicketSale.json';
 import toast from 'react-hot-toast';
-import { 
-  Calendar, 
-  MapPin, 
-  DollarSign, 
-  User, 
+import {
+  Calendar,
+  MapPin,
+  DollarSign,
+  User,
   Clock,
   ShoppingCart,
   Download,
@@ -35,7 +35,7 @@ const TicketDetailPage = () => {
   const [verificationResult, setVerificationResult] = useState(null);
   const [error, setError] = useState(null);
   const [lastTransactionHash, setLastTransactionHash] = useState(null);
-  
+
   // ✅ NEW: State to track if user already owns this ticket
   const [hasBought, setHasBought] = useState(false);
 
@@ -70,9 +70,9 @@ const TicketDetailPage = () => {
       // only set it if ticket is null (first load)
       if (!ticket) setIsLoading(true);
       setError(null);
-      
+
       const contract = getContractReadOnly();
-      
+
       // First check if ticket exists by trying to get it
       let ticketData;
       try {
@@ -85,7 +85,7 @@ const TicketDetailPage = () => {
         }
         throw ticketError; // Re-throw if it's a different error
       }
-      
+
       setTicket({
         id: id,
         eventName: ticketData.eventName,
@@ -130,17 +130,17 @@ const TicketDetailPage = () => {
   const loadTransactionHash = async () => {
     try {
       const contract = getContractReadOnly();
-      
+
       // First try to get TicketDownloaded event
       let filter = contract.filters.TicketDownloaded(id);
       let events = await contract.queryFilter(filter);
-      
+
       // If no download event, try TicketPurchased event
       if (events.length === 0) {
         filter = contract.filters.TicketPurchased(id);
         events = await contract.queryFilter(filter);
       }
-      
+
       if (events.length > 0) {
         // Get the transaction hash from the most recent event
         const latestEvent = events[events.length - 1];
@@ -164,24 +164,24 @@ const TicketDetailPage = () => {
     }
 
     setIsPurchasing(true);
-    
+
     try {
       const contract = await getContract();
-      
+
       toast.loading('Purchasing ticket...', { id: 'purchase' });
-      
+
       // ticket.price is stored from the contract in wei already
       const tx = await contract.buyTicket(id, {
         value: BigInt(ticket.price)
       });
-      
+
       toast.loading('Waiting for confirmation...', { id: 'purchase' });
       await tx.wait();
-      
+
       toast.success('Ticket purchased successfully!', { id: 'purchase' });
-      
+
       console.log('Purchase transaction completed:', tx.hash);
-      
+
       // Store purchase information in backend (using wallet address for identification)
       try {
         const response = await fetch('http://localhost:5000/api/purchases', {
@@ -202,31 +202,31 @@ const TicketDetailPage = () => {
             seller: ticket.seller
           })
         });
-        
+
         if (!response.ok) {
           console.warn('Failed to store purchase information in backend');
         }
       } catch (backendError) {
         console.warn('Backend error:', backendError);
       }
-      
+
       // Reload ticket data
       await loadTicket();
 
-     // notify other pages that tickets changed
-     try {
-       window.dispatchEvent(new CustomEvent('ticketsUpdated', { detail: { ticketId: id, action: 'purchased' } }));
-     } catch (e) {
-       // noop
-     }
-      
+      // notify other pages that tickets changed
+      try {
+        window.dispatchEvent(new CustomEvent('ticketsUpdated', { detail: { ticketId: id, action: 'purchased' } }));
+      } catch (e) {
+        // noop
+      }
+
     } catch (error) {
       console.error('Error purchasing ticket:', error);
       // ✅ Handle the specific revert error
       if (error.message.includes("You already have a ticket")) {
-          toast.error("You already own a ticket for this event!");
+        toast.error("You already own a ticket for this event!");
       } else {
-          toast.error(error.message || 'Failed to purchase ticket');
+        toast.error(error.message || 'Failed to purchase ticket');
       }
     } finally {
       setIsPurchasing(false);
@@ -240,31 +240,31 @@ const TicketDetailPage = () => {
     }
 
     setIsDownloading(true);
-    
+
     try {
       toast.loading('Downloading ticket...', { id: 'download' });
-      
+
       const contract = await getContract();
       const tx = await contract.downloadTicket(id);
-      
+
       toast.loading('Waiting for confirmation...', { id: 'download' });
       const receipt = await tx.wait();
-      
+
       // Store transaction hash for display
       setLastTransactionHash(tx.hash);
-      
+
       toast.success('Ticket downloaded successfully! NFT minted to your wallet.', { id: 'download' });
-      
+
       // Reload ticket data
       await loadTicket();
-      
-     // notify other pages
-     try {
-       window.dispatchEvent(new CustomEvent('ticketsUpdated', { detail: { ticketId: id, action: 'downloaded', txHash: tx?.hash } }));
-     } catch (e) {
-       // noop
-     }
-      
+
+      // notify other pages
+      try {
+        window.dispatchEvent(new CustomEvent('ticketsUpdated', { detail: { ticketId: id, action: 'downloaded', txHash: tx?.hash } }));
+      } catch (e) {
+        // noop
+      }
+
     } catch (error) {
       console.error('Error downloading ticket:', error);
       toast.error(error.message || 'Failed to download ticket');
@@ -280,19 +280,19 @@ const TicketDetailPage = () => {
     }
 
     setIsVerifying(true);
-    
+
     try {
       const contract = await getContract();
       const isValid = await contract.verifyTicket(id);
-      
+
       setVerificationResult(isValid);
-      
+
       if (isValid) {
         toast.success('Ticket verification successful!');
       } else {
         toast.error('Ticket verification failed');
       }
-      
+
     } catch (error) {
       console.error('Error verifying ticket:', error);
       toast.error(error.message || 'Failed to verify ticket');
@@ -326,13 +326,13 @@ const TicketDetailPage = () => {
 
   // ✅ UPDATED: Include hasBought check
   const canPurchase = () => {
-    return isConnected && 
-           isSupportedNetwork && 
-           isSaleActive() && 
-           !ticket.isSold && 
-           !ticket.isRefunded && 
-           Number(ticket.availableTickets || 0) > 0 &&
-           !hasBought; // Must not have bought a ticket already
+    return isConnected &&
+      isSupportedNetwork &&
+      isSaleActive() &&
+      !ticket.isSold &&
+      !ticket.isRefunded &&
+      Number(ticket.availableTickets || 0) > 0 &&
+      !hasBought; // Must not have bought a ticket already
   };
 
   const canDownload = () => {
@@ -425,26 +425,26 @@ const TicketDetailPage = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {ticket.eventName}
             </h1>
-            
+
             <div className="space-y-4">
               <div className="flex items-center text-gray-600">
                 <User className="w-5 h-5 mr-3" />
                 <span className="font-medium">Organizer:</span>
                 <span className="ml-2">{ticket.organizer}</span>
               </div>
-              
+
               <div className="flex items-center text-gray-600">
                 <Calendar className="w-5 h-5 mr-3" />
                 <span className="font-medium">Event Date:</span>
                 <span className="ml-2">{formatDate(ticket.eventDate)}</span>
               </div>
-              
+
               <div className="flex items-center text-gray-600">
                 <Clock className="w-5 h-5 mr-3" />
                 <span className="font-medium">Sale Ends:</span>
                 <span className="ml-2">{formatDate(ticket.saleEndDate)}</span>
               </div>
-              
+
               <div className="flex items-center text-gray-600">
                 <DollarSign className="w-5 h-5 mr-3" />
                 <span className="font-medium">Price:</span>
@@ -452,62 +452,52 @@ const TicketDetailPage = () => {
                   {formatETH(ticket.price)} ETH
                 </span>
               </div>
-              
-              <div className="flex items-center text-gray-600">
-                <User className="w-5 h-5 mr-3" />
-                <span className="font-medium">Available Tickets:</span>
-                <span className="ml-2 font-semibold">
-                  {Number(ticket.availableTickets || 0)} / {Number(ticket.totalTickets || 0)}
-                </span>
-              </div>
+
+              {/* Available Tickets REMOVED as per request */}
             </div>
           </div>
 
           {/* Status */}
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Ticket Status</h3>
-            
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Sale Status:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  isSaleActive() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${isSaleActive() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
                   {isSaleActive() ? 'Active' : 'Ended'}
                 </span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Purchase Status:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  ticket.isSold ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                }`}>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.isSold ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                  }`}>
                   {ticket.isSold ? 'Sold' : 'Available'}
                 </span>
               </div>
-              
+
               {ticket.isSold && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Download Status:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    ticket.isDownloaded ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.isDownloaded ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
                     {ticket.isDownloaded ? 'Downloaded' : 'Pending Download'}
                   </span>
                 </div>
               )}
-              
+
               {ticket.isSold && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Transfer Status:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    ticket.isSecondHand ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticket.isSecondHand ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}>
                     {ticket.isSecondHand ? 'Non-Transferable (Limit Reached)' : 'Transferable'}
                   </span>
                 </div>
               )}
-              
+
               {ticket.isRefunded && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Refund Status:</span>
@@ -519,12 +509,12 @@ const TicketDetailPage = () => {
 
               {/* ✅ NEW: Wallet Limit Warning */}
               {hasBought && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                      <div className="text-sm text-yellow-800">
-                          <span className="font-semibold">Wallet Limit Reached:</span> You already own a ticket for <strong>{ticket.eventName}</strong>. You cannot buy another one unless you transfer your existing ticket.
-                      </div>
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <span className="font-semibold">Wallet Limit Reached:</span> You already own a ticket for <strong>{ticket.eventName}</strong>. You cannot buy another one unless you transfer your existing ticket.
                   </div>
+                </div>
               )}
             </div>
           </div>
@@ -532,7 +522,7 @@ const TicketDetailPage = () => {
           {/* Actions */}
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-            
+
             <div className="space-y-3">
               {/* Purchase Button */}
               {canPurchase() && (
@@ -557,10 +547,10 @@ const TicketDetailPage = () => {
 
               {/* ✅ NEW: Disabled Button for Limit Reached */}
               {hasBought && !ticket.isSold && (
-                  <button disabled className="w-full bg-gray-100 text-gray-400 border border-gray-200 font-medium py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
-                      <ShoppingCart className="w-5 h-5" />
-                      <span>Limit Reached (1 Per Wallet)</span>
-                  </button>
+                <button disabled className="w-full bg-gray-100 text-gray-400 border border-gray-200 font-medium py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>Limit Reached (1 Per Wallet)</span>
+                </button>
               )}
 
               {/* Download Button */}
@@ -618,9 +608,8 @@ const TicketDetailPage = () => {
 
               {/* Verification Result */}
               {verificationResult !== null && (
-                <div className={`p-3 rounded-lg flex items-center space-x-2 ${
-                  verificationResult ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                }`}>
+                <div className={`p-3 rounded-lg flex items-center space-x-2 ${verificationResult ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  }`}>
                   {verificationResult ? (
                     <CheckCircle className="w-5 h-5" />
                   ) : (
@@ -638,7 +627,7 @@ const TicketDetailPage = () => {
                   Connect your wallet to interact with tickets
                 </div>
               )}
-              
+
               {isConnected && !isSupportedNetwork && (
                 <div className="text-center text-red-500 py-4">
                   Please switch to Sepolia or Localhost network
@@ -697,8 +686,8 @@ const TicketDetailPage = () => {
 
           {/* Ticket Quantity Manager (for sellers) */}
           {isSeller() && (
-            <TicketQuantityManager 
-              ticket={ticket} 
+            <TicketQuantityManager
+              ticket={ticket}
               onUpdate={loadTicket}
             />
           )}

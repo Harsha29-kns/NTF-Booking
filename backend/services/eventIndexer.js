@@ -66,8 +66,10 @@ class EventIndexer {
 
     // Get the latest block to start from
     try {
-      this.lastProcessedBlock = await this.provider.getBlockNumber();
-      console.log(`📦 Starting from block: ${this.lastProcessedBlock}`);
+      const currentBlock = await this.provider.getBlockNumber();
+      // FIX: Look back 5000 blocks to catch missed events during server downtime
+      this.lastProcessedBlock = Math.max(0, currentBlock - 5000);
+      console.log(`📦 Starting from block: ${this.lastProcessedBlock} (Replay mode)`);
     } catch (error) {
       console.error('❌ Failed to get latest block:', error.message);
       console.log('⏳ Waiting for blockchain connection...');

@@ -17,7 +17,8 @@ import {
   UserCircle,
   Menu,
   X,
-  ArrowRightLeft // <--- Added Icon for Transfers
+  ArrowRightLeft,
+  BarChart2 // Added Icon
 } from 'lucide-react';
 import contractInfo from '../contracts/TicketSale.json';
 
@@ -70,6 +71,7 @@ const Layout = ({ children }) => {
 
       if (user?.isOrganizer) {
         navItems.push({ name: 'Create Sale', href: '/create-sale', icon: Plus });
+        navItems.push({ name: 'Analytics', href: '/organizer/analytics', icon: BarChart2 }); // NEW LINK
 
         // --- NEW LINK ADDED HERE ---
         navItems.push({ name: 'Manage Transfers', href: '/organizer/transfers', icon: ArrowRightLeft });
@@ -79,10 +81,10 @@ const Layout = ({ children }) => {
 
 
       } else {
-        navItems.push({ name: 'Verify Ticket', href: '/verify', icon: Shield });
+        // navItems.push({ name: 'Verify Ticket', href: '/verify', icon: Shield }); // REMOVED
       }
     } else {
-      navItems.push({ name: 'Verify Ticket', href: '/verify', icon: Shield });
+      // navItems.push({ name: 'Verify Ticket', href: '/verify', icon: Shield }); // REMOVED
     }
 
     return navItems;

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -19,42 +20,42 @@
             line-height: 1.6;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
         }
-        
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 40px;
             text-align: center;
         }
-        
+
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
-        
+
         .header p {
             font-size: 1.1em;
             opacity: 0.9;
         }
-        
+
         .content {
             padding: 40px;
         }
-        
+
         .section {
             margin-bottom: 60px;
         }
-        
+
         .section h2 {
             color: #667eea;
             font-size: 2em;
@@ -62,25 +63,25 @@
             padding-bottom: 10px;
             border-bottom: 3px solid #667eea;
         }
-        
+
         .section h3 {
             color: #764ba2;
             font-size: 1.5em;
             margin: 30px 0 15px 0;
         }
-        
+
         .diagram-container {
             background: #f8f9fa;
             border-radius: 10px;
             padding: 30px;
             margin: 20px 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .mermaid {
             text-align: center;
         }
-        
+
         .info-box {
             background: #e3f2fd;
             border-left: 4px solid #2196f3;
@@ -88,7 +89,7 @@
             margin: 20px 0;
             border-radius: 5px;
         }
-        
+
         .warning-box {
             background: #fff3e0;
             border-left: 4px solid #ff9800;
@@ -96,7 +97,7 @@
             margin: 20px 0;
             border-radius: 5px;
         }
-        
+
         .success-box {
             background: #e8f5e9;
             border-left: 4px solid #4caf50;
@@ -104,101 +105,104 @@
             margin: 20px 0;
             border-radius: 5px;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         table th {
             background: #667eea;
             color: white;
             padding: 15px;
             text-align: left;
         }
-        
+
         table td {
             padding: 12px 15px;
             border-bottom: 1px solid #ddd;
         }
-        
+
         table tr:hover {
             background: #f5f5f5;
         }
-        
+
         .feature-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin: 20px 0;
         }
-        
+
         .feature-item {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
             border-left: 4px solid #667eea;
         }
-        
+
         .feature-item strong {
             color: #667eea;
             font-size: 1.1em;
         }
-        
+
         code {
             background: #f4f4f4;
             padding: 2px 6px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
         }
-        
+
         .toc {
             background: #f8f9fa;
             padding: 30px;
             border-radius: 10px;
             margin-bottom: 40px;
         }
-        
+
         .toc h3 {
             color: #667eea;
             margin-bottom: 15px;
         }
-        
+
         .toc ul {
             list-style: none;
             padding-left: 0;
         }
-        
+
         .toc li {
             padding: 8px 0;
         }
-        
+
         .toc a {
             color: #764ba2;
             text-decoration: none;
             transition: color 0.3s;
         }
-        
+
         .toc a:hover {
             color: #667eea;
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>🎫 NFT Ticketing System</h1>
             <p>Complete Flow Diagram - From Start to Finish</p>
         </div>
-        
+
         <div class="content">
             <div class="info-box">
-                <p><strong>📖 About This Document:</strong> This comprehensive guide shows how the NFT Ticketing System works from start to finish, covering all user journeys, smart contract interactions, and system architecture with visual flowcharts.</p>
+                <p><strong>📖 About This Document:</strong> This comprehensive guide shows how the NFT Ticketing System
+                    works from start to finish, covering all user journeys, smart contract interactions, and system
+                    architecture with visual flowcharts.</p>
             </div>
-            
+
             <div class="toc">
                 <h3>📑 Table of Contents</h3>
                 <ul>
@@ -216,370 +220,366 @@
                     <li><a href="#deployment">12. Deployment Flow</a></li>
                 </ul>
             </div>
-            
+
             <!-- Section 1: Architecture -->
             <div class="section" id="architecture">
                 <h2>1. System Architecture Overview</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TB
-    subgraph "Frontend Layer"
-        UI[React Frontend<br/>Vite + TailwindCSS]
-        WEB3[Web3 Context<br/>MetaMask Integration]
-        AUTH[Auth Context<br/>JWT Authentication]
-    end
-    
-    subgraph "Backend Layer"
-        API[Express.js API Server<br/>Port 5000]
-        ROUTES[API Routes]
-        SERVICES[Business Logic Services]
-        INDEXER[Event Indexer<br/>Blockchain Sync]
-    end
-    
-    subgraph "Data Layer"
-        MONGO[(MongoDB Database<br/>User & Event Data)]
-        IPFS[IPFS Storage<br/>Pinata/NFT.Storage<br/>Images & Metadata]
-    end
-    
-    subgraph "Blockchain Layer"
-        HARDHAT[Hardhat Local Node<br/>or Sepolia Testnet]
-        CONTRACT[TicketSale Smart Contract<br/>ERC721 NFT]
-    end
-    
-    UI --> WEB3
-    UI --> AUTH
-    WEB3 --> API
-    AUTH --> API
-    API --> ROUTES
-    ROUTES --> SERVICES
-    SERVICES --> MONGO
-    SERVICES --> IPFS
-    SERVICES --> CONTRACT
-    INDEXER --> CONTRACT
-    INDEXER --> MONGO
-    WEB3 --> CONTRACT
-    
-    style UI fill:#3b82f6,color:#fff
-    style API fill:#10b981,color:#fff
-    style MONGO fill:#f59e0b,color:#fff
-    style CONTRACT fill:#8b5cf6,color:#fff
+                        graph TB
+                        subgraph "Frontend Layer"
+                        UI[React Frontend<br />Vite + TailwindCSS]
+                        WEB3[Web3 Context<br />MetaMask Integration]
+                        AUTH[Auth Context<br />JWT Authentication]
+                        end
+
+                        subgraph "Backend Layer"
+                        API[Express.js API Server<br />Port 5000]
+                        ROUTES[API Routes]
+                        SERVICES[Business Logic Services]
+                        INDEXER[Event Indexer<br />Blockchain Sync]
+                        end
+
+                        subgraph "Data Layer"
+                        MONGO[(MongoDB Database<br />User & Event Data)]
+                        IPFS[IPFS Storage<br />Pinata/NFT.Storage<br />Images & Metadata]
+                        end
+
+                        subgraph "Blockchain Layer"
+                        HARDHAT[Hardhat Local Node<br />or Sepolia Testnet]
+                        CONTRACT[TicketSale Smart Contract<br />ERC721 NFT]
+                        end
+
+                        UI --> WEB3
+                        UI --> AUTH
+                        WEB3 --> API
+                        AUTH --> API
+                        API --> ROUTES
+                        ROUTES --> SERVICES
+                        SERVICES --> MONGO
+                        SERVICES --> IPFS
+                        SERVICES --> CONTRACT
+                        INDEXER --> CONTRACT
+                        INDEXER --> MONGO
+                        WEB3 --> CONTRACT
+
+                        style UI fill:#3b82f6,color:#fff
+                        style API fill:#10b981,color:#fff
+                        style MONGO fill:#f59e0b,color:#fff
+                        style CONTRACT fill:#8b5cf6,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 2: User Journey -->
             <div class="section" id="user-journey">
                 <h2>2. Complete User Journey Flowchart</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    START([User Visits Website]) --> CONNECT{Connect<br/>MetaMask?}
-    
-    CONNECT -->|Yes| WALLET[MetaMask Wallet Connected]
-    CONNECT -->|No| BROWSE[Browse Events<br/>Read-Only Mode]
-    
-    WALLET --> REGISTER{Registered<br/>User?}
-    REGISTER -->|No| SIGNUP[Sign Up with Wallet<br/>Create Profile]
-    REGISTER -->|Yes| LOGIN[Auto Login via JWT]
-    
-    SIGNUP --> ROLE{Choose<br/>Role}
-    LOGIN --> ROLE
-    
-    ROLE -->|Regular User| USER_FLOW[User Journey]
-    ROLE -->|Apply as Organizer| ORG_FLOW[Organizer Journey]
-    
-    BROWSE --> VIEW_EVENTS[View Available Events]
-    VIEW_EVENTS --> CONNECT
-    
-    style START fill:#3b82f6,color:#fff
-    style WALLET fill:#10b981,color:#fff
-    style USER_FLOW fill:#f59e0b,color:#fff
-    style ORG_FLOW fill:#8b5cf6,color:#fff
+                        graph TD
+                        START([User Visits Website]) --> CONNECT{Connect<br />MetaMask?}
+
+                        CONNECT -->|Yes| WALLET[MetaMask Wallet Connected]
+                        CONNECT -->|No| BROWSE[Browse Events<br />Read-Only Mode]
+
+                        WALLET --> REGISTER{Registered<br />User?}
+                        REGISTER -->|No| SIGNUP[Sign Up with Wallet<br />Create Profile]
+                        REGISTER -->|Yes| LOGIN[Auto Login via JWT]
+
+                        SIGNUP --> ROLE{Choose<br />Role}
+                        LOGIN --> ROLE
+
+                        ROLE -->|Regular User| USER_FLOW[User Journey]
+                        ROLE -->|Apply as Organizer| ORG_FLOW[Organizer Journey]
+
+                        BROWSE --> VIEW_EVENTS[View Available Events]
+                        VIEW_EVENTS --> CONNECT
+
+                        style START fill:#3b82f6,color:#fff
+                        style WALLET fill:#10b981,color:#fff
+                        style USER_FLOW fill:#f59e0b,color:#fff
+                        style ORG_FLOW fill:#8b5cf6,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 3: Organizer Flow -->
             <div class="section" id="organizer-flow">
                 <h2>3. Organizer Journey - Event Creation Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    ORG_START([Organizer Logged In]) --> APPLY{Is Approved<br/>Organizer?}
-    
-    APPLY -->|No| APPLY_ORG[Apply to Become Organizer<br/>Submit Application]
-    APPLY_ORG --> WAIT[Wait for Admin Approval]
-    WAIT --> APPROVED{Approved?}
-    APPROVED -->|No| END1([Access Denied])
-    APPROVED -->|Yes| CREATE_EVENT
-    
-    APPLY -->|Yes| CREATE_EVENT[Navigate to Create Event Page]
-    
-    CREATE_EVENT --> FORM[Fill Event Details Form]
-    FORM --> DETAILS["• Event Name<br/>• Organizer Name<br/>• Event Date<br/>• Sale End Date<br/>• Ticket Price ETH<br/>• Total Tickets<br/>• Event Poster Image<br/>• Ticket Template Image"]
-    
-    DETAILS --> UPLOAD_IMAGES[Upload Images to IPFS]
-    UPLOAD_IMAGES --> IPFS_CID[Receive IPFS CIDs<br/>Poster & Ticket]
-    
-    IPFS_CID --> DEPLOY_CONTRACT[Call Smart Contract<br/>createSale Function]
-    
-    DEPLOY_CONTRACT --> BLOCKCHAIN["Blockchain Transaction<br/>• Validate inputs<br/>• Create ticket struct<br/>• Store on-chain<br/>• Emit TicketCreated event"]
-    
-    BLOCKCHAIN --> BACKEND_SYNC[Backend Event Indexer<br/>Detects New Event]
-    BACKEND_SYNC --> SAVE_DB[Save Event to MongoDB<br/>with Contract Details]
-    
-    SAVE_DB --> EVENT_LIVE([Event Published & Live!])
-    
-    EVENT_LIVE --> MANAGE[Organizer Can:<br/>• View Sales Analytics<br/>• Manage Tickets<br/>• Approve Transfers<br/>• Reset Quantities]
-    
-    style ORG_START fill:#8b5cf6,color:#fff
-    style DEPLOY_CONTRACT fill:#3b82f6,color:#fff
-    style BLOCKCHAIN fill:#10b981,color:#fff
-    style EVENT_LIVE fill:#f59e0b,color:#fff
+                        graph TD
+                        ORG_START([Organizer Logged In]) --> APPLY{Is Approved<br />Organizer?}
+
+                        APPLY -->|No| APPLY_ORG[Apply to Become Organizer<br />Submit Application]
+                        APPLY_ORG --> WAIT[Wait for Admin Approval]
+                        WAIT --> APPROVED{Approved?}
+                        APPROVED -->|No| END1([Access Denied])
+                        APPROVED -->|Yes| CREATE_EVENT
+
+                        APPLY -->|Yes| CREATE_EVENT[Navigate to Create Event Page]
+
+                        CREATE_EVENT --> FORM[Fill Event Details Form]
+                        FORM --> DETAILS["• Event Name<br />• Organizer Name<br />• Event Date<br />• Sale End
+                        Date<br />• Ticket Price ETH<br />• Total Tickets<br />• Event Poster Image<br />• Ticket
+                        Template Image"]
+
+                        DETAILS --> UPLOAD_IMAGES[Upload Images to IPFS]
+                        UPLOAD_IMAGES --> IPFS_CID[Receive IPFS CIDs<br />Poster & Ticket]
+
+                        IPFS_CID --> DEPLOY_CONTRACT[Call Smart Contract<br />createSale Function]
+
+                        DEPLOY_CONTRACT --> BLOCKCHAIN["Blockchain Transaction<br />• Validate inputs<br />• Create
+                        ticket struct<br />• Store on-chain<br />• Emit TicketCreated event"]
+
+                        BLOCKCHAIN --> BACKEND_SYNC[Backend Event Indexer<br />Detects New Event]
+                        BACKEND_SYNC --> SAVE_DB[Save Event to MongoDB<br />with Contract Details]
+
+                        SAVE_DB --> EVENT_LIVE([Event Published & Live!])
+
+                        EVENT_LIVE --> MANAGE[Organizer Can:<br />• View Sales Analytics<br />• Manage Tickets<br />•
+                        Approve Transfers<br />• Reset Quantities]
+
+                        style ORG_START fill:#8b5cf6,color:#fff
+                        style DEPLOY_CONTRACT fill:#3b82f6,color:#fff
+                        style BLOCKCHAIN fill:#10b981,color:#fff
+                        style EVENT_LIVE fill:#f59e0b,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 4: Purchase Flow -->
             <div class="section" id="purchase-flow">
                 <h2>4. User Journey - Ticket Purchase Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    USER_START([User Logged In]) --> BROWSE_EVENTS[Browse Available Events]
-    
-    BROWSE_EVENTS --> SELECT[Select Event to View Details]
-    SELECT --> EVENT_DETAIL["View Event Information:<br/>• Event Name & Date<br/>• Organizer<br/>• Price<br/>• Available Tickets<br/>• Poster Image"]
-    
-    EVENT_DETAIL --> CHECK_WALLET{Already Own<br/>Ticket for<br/>This Event?}
-    
-    CHECK_WALLET -->|Yes| ALREADY_OWN[❌ Cannot Purchase<br/>1 Ticket Per Wallet Policy]
-    CHECK_WALLET -->|No| BUY_BUTTON[Click Buy Ticket]
-    
-    BUY_BUTTON --> METAMASK_CONFIRM[MetaMask Transaction Popup<br/>Confirm Payment]
-    
-    METAMASK_CONFIRM --> USER_APPROVE{User<br/>Approves?}
-    USER_APPROVE -->|No| CANCEL([Purchase Cancelled])
-    
-    USER_APPROVE -->|Yes| BLOCKCHAIN_TX["Smart Contract Execution:<br/>• Verify payment amount<br/>• Check ticket availability<br/>• Enforce 1-per-wallet rule<br/>• Transfer ETH to organizer<br/>• Create new ticket instance<br/>• Mark user as ticket holder"]
-    
-    BLOCKCHAIN_TX --> TX_SUCCESS{Transaction<br/>Success?}
-    
-    TX_SUCCESS -->|No| ERROR[❌ Transaction Failed<br/>Funds Returned]
-    TX_SUCCESS -->|Yes| BACKEND_UPDATE[Backend Detects Purchase<br/>via Event Indexer]
-    
-    BACKEND_UPDATE --> DB_UPDATE[Update MongoDB:<br/>• Create purchase record<br/>• Link ticket to user<br/>• Update available count]
-    
-    DB_UPDATE --> PURCHASE_COMPLETE([✅ Purchase Complete!])
-    
-    PURCHASE_COMPLETE --> MY_TICKETS[View in My Tickets Page]
-    
-    style USER_START fill:#3b82f6,color:#fff
-    style BLOCKCHAIN_TX fill:#10b981,color:#fff
-    style PURCHASE_COMPLETE fill:#f59e0b,color:#fff
+                        graph TD
+                        USER_START([User Logged In]) --> BROWSE_EVENTS[Browse Available Events]
+
+                        BROWSE_EVENTS --> SELECT[Select Event to View Details]
+                        SELECT --> EVENT_DETAIL["View Event Information:<br />• Event Name & Date<br />•
+                        Organizer<br />• Price<br />• Available Tickets<br />• Poster Image"]
+
+                        EVENT_DETAIL --> CHECK_WALLET{Already Own<br />Ticket for<br />This Event?}
+
+                        CHECK_WALLET -->|Yes| ALREADY_OWN[❌ Cannot Purchase<br />1 Ticket Per Wallet Policy]
+                        CHECK_WALLET -->|No| BUY_BUTTON[Click Buy Ticket]
+
+                        BUY_BUTTON --> METAMASK_CONFIRM[MetaMask Transaction Popup<br />Confirm Payment]
+
+                        METAMASK_CONFIRM --> USER_APPROVE{User<br />Approves?}
+                        USER_APPROVE -->|No| CANCEL([Purchase Cancelled])
+
+                        USER_APPROVE -->|Yes| BLOCKCHAIN_TX["Smart Contract Execution:<br />• Verify payment
+                        amount<br />• Check ticket availability<br />• Enforce 1-per-wallet rule<br />• Transfer ETH to
+                        organizer<br />• Create new ticket instance<br />• Mark user as ticket holder"]
+
+                        BLOCKCHAIN_TX --> TX_SUCCESS{Transaction<br />Success?}
+
+                        TX_SUCCESS -->|No| ERROR[❌ Transaction Failed<br />Funds Returned]
+                        TX_SUCCESS -->|Yes| BACKEND_UPDATE[Backend Detects Purchase<br />via Event Indexer]
+
+                        BACKEND_UPDATE --> DB_UPDATE[Update MongoDB:<br />• Create purchase record<br />• Link ticket to
+                        user<br />• Update available count]
+
+                        DB_UPDATE --> PURCHASE_COMPLETE([✅ Purchase Complete!])
+
+                        PURCHASE_COMPLETE --> MY_TICKETS[View in My Tickets Page]
+
+                        style USER_START fill:#3b82f6,color:#fff
+                        style BLOCKCHAIN_TX fill:#10b981,color:#fff
+                        style PURCHASE_COMPLETE fill:#f59e0b,color:#fff
                     </div>
                 </div>
             </div>
-            
-            <!-- Section 5: NFT Minting -->
+
+            <!-- Section 5: NFT Minting & 2FA -->
             <div class="section" id="nft-minting">
-                <h2>5. Ticket Download & NFT Minting Flow</h2>
+                <h2>5. Ticket Download, Minting & 2FA Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    PURCHASED([User Has Purchased Ticket]) --> MY_TICKETS_PAGE[Navigate to My Tickets]
-    
-    MY_TICKETS_PAGE --> VIEW_TICKET[View Ticket Details]
-    VIEW_TICKET --> DOWNLOAD_CHECK{Ticket Already<br/>Downloaded?}
-    
-    DOWNLOAD_CHECK -->|Yes| ALREADY_MINTED[✅ NFT Already Minted<br/>View/Print Ticket]
-    DOWNLOAD_CHECK -->|No| DOWNLOAD_BTN[Click Download Ticket]
-    
-    DOWNLOAD_BTN --> CALL_CONTRACT[Call Smart Contract<br/>downloadTicket Function]
-    
-    CALL_CONTRACT --> VERIFY["Blockchain Verification:<br/>• Ticket exists<br/>• Ticket is sold<br/>• Caller is buyer<br/>• Not already downloaded<br/>• Not refunded"]
-    
-    VERIFY --> MINT_NFT[Mint ERC721 NFT<br/>to User's Wallet]
-    
-    MINT_NFT --> UPDATE_STATUS[Update Ticket Status:<br/>isDownloaded = true]
-    
-    UPDATE_STATUS --> EMIT_EVENT[Emit TicketDownloaded Event]
-    
-    EMIT_EVENT --> BACKEND_SYNC[Backend Syncs Status<br/>via Event Indexer]
-    
-    BACKEND_SYNC --> GENERATE_QR[Generate QR Code<br/>with Ticket ID]
-    
-    GENERATE_QR --> DISPLAY_TICKET["Display NFT Ticket:<br/>• Event Details<br/>• QR Code<br/>• Unique Ticket ID<br/>• Owner Wallet Address<br/>• Transfer Status"]
-    
-    DISPLAY_TICKET --> ACTIONS["User Can:<br/>• Print Ticket<br/>• View in Wallet<br/>• Request Transfer<br/>• Verify Authenticity"]
-    
-    ALREADY_MINTED --> ACTIONS
-    
-    style PURCHASED fill:#3b82f6,color:#fff
-    style MINT_NFT fill:#8b5cf6,color:#fff
-    style DISPLAY_TICKET fill:#10b981,color:#fff
+                        graph TD
+                        START(["User @ My Tickets"]) --> CHECK{"Downloaded?"}
+
+                        CHECK -->|No| DOWNLOAD["Click 'Download Ticket'<br />(Mints NFT on Blockchain)"]
+                        DOWNLOAD --> CHECK
+
+                        CHECK -->|Yes| REVEAL["Click 'Reveal QR Code'"]
+                        REVEAL --> OTP["📧 System Sends Email OTP"]
+
+                        OTP --> INPUT["User Enters 6-Digit Code"]
+                        INPUT --> VERIFY{"Code Valid?"}
+
+                        VERIFY -->|No| RETRY["❌ Invalid - Try Again"]
+                        RETRY --> INPUT
+
+                        VERIFY -->|Yes| SUCCESS["✅ Success!"]
+                        SUCCESS --> QR["Display Dynamic QR Code<br />(Refreshes every 30s)"]
+
+                        style START fill:#3b82f6,color:#fff
+                        style DOWNLOAD fill:#8b5cf6,color:#fff
+                        style OTP fill:#f59e0b,color:#fff
+                        style QR fill:#10b981,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 6: Transfer Flow -->
             <div class="section" id="transfer-flow">
                 <h2>6. Ticket Transfer Flow (One-Time Only)</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    OWNER([Ticket Owner]) --> REQUEST_TRANSFER[Request Ticket Transfer]
-    
-    REQUEST_TRANSFER --> FILL_FORM["Fill Transfer Form:<br/>• Recipient Wallet Address<br/>• Reason for Transfer"]
-    
-    FILL_FORM --> SUBMIT_REQUEST[Submit Transfer Request<br/>to Backend]
-    
-    SUBMIT_REQUEST --> DB_SAVE[Save Transfer Request<br/>to MongoDB<br/>Status: Pending]
-    
-    DB_SAVE --> NOTIFY_ORG[Notify Event Organizer<br/>New Transfer Request]
-    
-    NOTIFY_ORG --> ORG_REVIEW{Organizer<br/>Reviews<br/>Request}
-    
-    ORG_REVIEW -->|Reject| REJECT_DB[Update Status: Rejected]
-    REJECT_DB --> NOTIFY_USER_REJECT[Notify User: Rejected]
-    
-    ORG_REVIEW -->|Approve| CHECK_TRANSFER{Ticket Already<br/>Transferred<br/>Once?}
-    
-    CHECK_TRANSFER -->|Yes| REJECT_SECOND[❌ Cannot Transfer<br/>One-Time Transfer Policy]
-    
-    CHECK_TRANSFER -->|No| CHECK_RECIPIENT{Recipient<br/>Already Has<br/>Ticket?}
-    
-    CHECK_RECIPIENT -->|Yes| REJECT_DUP[❌ Cannot Transfer<br/>Recipient Already Owns Ticket]
-    
-    CHECK_RECIPIENT -->|No| EXECUTE_TRANSFER[Organizer Calls<br/>adminTransferTicket<br/>on Smart Contract]
-    
-    EXECUTE_TRANSFER --> BLOCKCHAIN_TRANSFER["Blockchain Execution:<br/>• Verify ownership<br/>• Check transfer count<br/>• Remove from sender<br/>• Add to recipient<br/>• Mark as Second Hand<br/>• Reset download status<br/>• Transfer NFT if minted"]
-    
-    BLOCKCHAIN_TRANSFER --> UPDATE_FLAGS["Update Mappings:<br/>• sender can buy again<br/>• recipient cannot buy<br/>• isSecondHand = true"]
-    
-    UPDATE_FLAGS --> EMIT_TRANSFER[Emit TicketTransferred Event]
-    
-    EMIT_TRANSFER --> BACKEND_UPDATE[Backend Syncs Transfer<br/>Update MongoDB]
-    
-    BACKEND_UPDATE --> TRANSFER_COMPLETE([✅ Transfer Complete!])
-    
-    TRANSFER_COMPLETE --> NEW_OWNER[New Owner Can:<br/>• Download NFT Again<br/>• Get New QR Code<br/>• Cannot Transfer Again]
-    
-    TRANSFER_COMPLETE --> OLD_OWNER[Original Owner:<br/>• Loses Ticket<br/>• Can Buy Again for Event]
-    
-    style OWNER fill:#3b82f6,color:#fff
-    style EXECUTE_TRANSFER fill:#8b5cf6,color:#fff
-    style TRANSFER_COMPLETE fill:#10b981,color:#fff
+                        graph TD
+                        OWNER([Ticket Owner]) --> REQUEST_TRANSFER[Request Ticket Transfer]
+
+                        REQUEST_TRANSFER --> FILL_FORM["Fill Transfer Form:<br />• Recipient Wallet Address<br />•
+                        Reason for Transfer"]
+
+                        FILL_FORM --> SUBMIT_REQUEST[Submit Transfer Request<br />to Backend]
+
+                        SUBMIT_REQUEST --> DB_SAVE[Save Transfer Request<br />to MongoDB<br />Status: Pending]
+
+                        DB_SAVE --> NOTIFY_ORG[Notify Event Organizer<br />New Transfer Request]
+
+                        NOTIFY_ORG --> ORG_REVIEW{Organizer<br />Reviews<br />Request}
+
+                        ORG_REVIEW -->|Reject| REJECT_DB[Update Status: Rejected]
+                        REJECT_DB --> NOTIFY_USER_REJECT[Notify User: Rejected]
+
+                        ORG_REVIEW -->|Approve| CHECK_TRANSFER{Ticket Already<br />Transferred<br />Once?}
+
+                        CHECK_TRANSFER -->|Yes| REJECT_SECOND[❌ Cannot Transfer<br />One-Time Transfer Policy]
+
+                        CHECK_TRANSFER -->|No| CHECK_RECIPIENT{Recipient<br />Already Has<br />Ticket?}
+
+                        CHECK_RECIPIENT -->|Yes| REJECT_DUP[❌ Cannot Transfer<br />Recipient Already Owns Ticket]
+
+                        CHECK_RECIPIENT -->|No| EXECUTE_TRANSFER[Organizer Calls<br />adminTransferTicket<br />on Smart
+                        Contract]
+
+                        EXECUTE_TRANSFER --> BLOCKCHAIN_TRANSFER["Blockchain Execution:<br />• Verify ownership<br />•
+                        Check transfer count<br />• Remove from sender<br />• Add to recipient<br />• Mark as Second
+                        Hand<br />• Reset download status<br />• Transfer NFT if minted"]
+
+                        BLOCKCHAIN_TRANSFER --> UPDATE_FLAGS["Update Mappings:<br />• sender can buy again<br />•
+                        recipient cannot buy<br />• isSecondHand = true"]
+
+                        UPDATE_FLAGS --> EMIT_TRANSFER[Emit TicketTransferred Event]
+
+                        EMIT_TRANSFER --> BACKEND_UPDATE[Backend Syncs Transfer<br />Update MongoDB]
+
+                        BACKEND_UPDATE --> TRANSFER_COMPLETE([✅ Transfer Complete!])
+
+                        TRANSFER_COMPLETE --> NEW_OWNER[New Owner Can:<br />• Download NFT Again<br />• Get New QR
+                        Code<br />• Cannot Transfer Again]
+
+                        TRANSFER_COMPLETE --> OLD_OWNER[Original Owner:<br />• Loses Ticket<br />• Can Buy Again for
+                        Event]
+
+                        style OWNER fill:#3b82f6,color:#fff
+                        style EXECUTE_TRANSFER fill:#8b5cf6,color:#fff
+                        style TRANSFER_COMPLETE fill:#10b981,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 7: Verification -->
             <div class="section" id="verification">
-                <h2>7. Ticket Verification Flow</h2>
+                <h2>7. Gatekeeper Verification Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    VERIFY_START([Verification Request]) --> SCAN_QR[Scan QR Code<br/>or Enter Ticket ID]
-    
-    SCAN_QR --> GET_ID[Extract Ticket ID]
-    
-    GET_ID --> CALL_VERIFY[Call Smart Contract<br/>verifyTicket Function]
-    
-    CALL_VERIFY --> CHECK_EXISTS{Ticket<br/>Exists?}
-    CHECK_EXISTS -->|No| INVALID1[❌ Invalid Ticket]
-    
-    CHECK_EXISTS -->|Yes| CHECK_DOWNLOADED{NFT<br/>Minted?}
-    CHECK_DOWNLOADED -->|No| INVALID2[❌ Ticket Not Downloaded]
-    
-    CHECK_DOWNLOADED -->|Yes| CHECK_REFUNDED{Ticket<br/>Refunded?}
-    CHECK_REFUNDED -->|Yes| INVALID3[❌ Ticket Refunded]
-    
-    CHECK_REFUNDED -->|No| CHECK_OWNER{Caller Owns<br/>NFT?}
-    CHECK_OWNER -->|No| INVALID4[❌ Not Ticket Owner]
-    
-    CHECK_OWNER -->|Yes| VALID[✅ Valid Ticket!]
-    
-    VALID --> DISPLAY_INFO["Display Ticket Info:<br/>• Event Name<br/>• Event Date<br/>• Owner Address<br/>• Ticket Status<br/>• Transfer History<br/>• Second Hand Status"]
-    
-    DISPLAY_INFO --> ADMIN_VERIFY{Admin/Organizer<br/>Verification?}
-    
-    ADMIN_VERIFY -->|Yes| MARK_USED[Mark Ticket as Used<br/>in Database]
-    ADMIN_VERIFY -->|No| END_VERIFY([Verification Complete])
-    
-    MARK_USED --> END_VERIFY
-    
-    style VERIFY_START fill:#3b82f6,color:#fff
-    style VALID fill:#10b981,color:#fff
-    style INVALID1 fill:#ef4444,color:#fff
-    style INVALID2 fill:#ef4444,color:#fff
-    style INVALID3 fill:#ef4444,color:#fff
-    style INVALID4 fill:#ef4444,color:#fff
+                        graph TD
+                        GK_LOGIN(["Gatekeeper Login"]) --> SCAN_MODE["Open QR Scanner"]
+
+                        SCAN_MODE --> SCAN_QR["Scan User's Dynamic QR"]
+
+                        SCAN_QR --> DECODE["Decode JWT Payload"]
+                        DECODE --> VERIFY_SIG{"Verify<br />Signature?"}
+
+                        VERIFY_SIG -->|Invalid| FAKE_QR["❌ FAKE QR<br />Signature Mismatch"]
+
+                        VERIFY_SIG -->|Valid| CHECK_DB{"Check DB<br />State"}
+
+                        CHECK_DB -->|Already Used| DUPLICATE["❌ DUPLICATE<br />Entry Denied"]
+                        CHECK_DB -->|Valid| ALLOW["✅ VALID ENTRY"]
+
+                        ALLOW --> LOG_ENTRY["Log Entry to DB<br />Timestamped"]
+                        LOG_ENTRY --> UPDATE_STATUS["Mark Ticket as Used"]
+
+                        DUPLICATE --> AUDIT["Log Failed Attempt<br />for Audit"]
+                        FAKE_QR --> AUDIT
+
+                        style GK_LOGIN fill:#3b82f6,color:#fff
+                        style ALLOW fill:#10b981,color:#fff
+                        style DUPLICATE fill:#ef4444,color:#fff
+                        style FAKE_QR fill:#ef4444,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 8: Event Indexer -->
             <div class="section" id="indexer">
                 <h2>8. Backend Event Indexer - Blockchain Sync Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    INDEXER_START([Event Indexer Service<br/>Starts with Backend]) --> POLL[Poll Blockchain<br/>Every 15 Seconds]
-    
-    POLL --> LISTEN["Listen for Events:<br/>• TicketCreated<br/>• TicketPurchased<br/>• TicketDownloaded<br/>• TicketTransferred<br/>• TicketRefunded"]
-    
-    LISTEN --> EVENT_DETECTED{New Event<br/>Detected?}
-    
-    EVENT_DETECTED -->|No| WAIT[Wait 15 Seconds]
-    WAIT --> POLL
-    
-    EVENT_DETECTED -->|Yes| PARSE[Parse Event Data<br/>Extract Details]
-    
-    PARSE --> EVENT_TYPE{Event<br/>Type?}
-    
-    EVENT_TYPE -->|TicketCreated| SYNC_CREATE[Sync New Event<br/>to MongoDB]
-    EVENT_TYPE -->|TicketPurchased| SYNC_PURCHASE[Sync Purchase<br/>to MongoDB]
-    EVENT_TYPE -->|TicketDownloaded| SYNC_DOWNLOAD[Update Download Status<br/>in MongoDB]
-    EVENT_TYPE -->|TicketTransferred| SYNC_TRANSFER[Update Ownership<br/>in MongoDB]
-    EVENT_TYPE -->|TicketRefunded| SYNC_REFUND[Update Refund Status<br/>in MongoDB]
-    
-    SYNC_CREATE --> UPDATE_DB[Update Database]
-    SYNC_PURCHASE --> UPDATE_DB
-    SYNC_DOWNLOAD --> UPDATE_DB
-    SYNC_TRANSFER --> UPDATE_DB
-    SYNC_REFUND --> UPDATE_DB
-    
-    UPDATE_DB --> VERIFY_OWNERSHIP[Verify Real-Time<br/>Blockchain Ownership]
-    
-    VERIFY_OWNERSHIP --> CONSISTENCY[Ensure Database<br/>Matches Blockchain State]
-    
-    CONSISTENCY --> POLL
-    
-    style INDEXER_START fill:#8b5cf6,color:#fff
-    style UPDATE_DB fill:#10b981,color:#fff
-    style CONSISTENCY fill:#f59e0b,color:#fff
+                        graph TD
+                        INDEXER_START([Event Indexer Service<br />Starts with Backend]) --> POLL[Poll
+                        Blockchain<br />Every 15 Seconds]
+
+                        POLL --> LISTEN["Listen for Events:<br />• TicketCreated<br />• TicketPurchased<br />•
+                        TicketDownloaded<br />• TicketTransferred<br />• TicketRefunded"]
+
+                        LISTEN --> EVENT_DETECTED{New Event<br />Detected?}
+
+                        EVENT_DETECTED -->|No| WAIT[Wait 15 Seconds]
+                        WAIT --> POLL
+
+                        EVENT_DETECTED -->|Yes| PARSE[Parse Event Data<br />Extract Details]
+
+                        PARSE --> EVENT_TYPE{Event<br />Type?}
+
+                        EVENT_TYPE -->|TicketCreated| SYNC_CREATE[Sync New Event<br />to MongoDB]
+                        EVENT_TYPE -->|TicketPurchased| SYNC_PURCHASE[Sync Purchase<br />to MongoDB]
+                        EVENT_TYPE -->|TicketDownloaded| SYNC_DOWNLOAD[Update Download Status<br />in MongoDB]
+                        EVENT_TYPE -->|TicketTransferred| SYNC_TRANSFER[Update Ownership<br />in MongoDB]
+                        EVENT_TYPE -->|TicketRefunded| SYNC_REFUND[Update Refund Status<br />in MongoDB]
+
+                        SYNC_CREATE --> UPDATE_DB[Update Database]
+                        SYNC_PURCHASE --> UPDATE_DB
+                        SYNC_DOWNLOAD --> UPDATE_DB
+                        SYNC_TRANSFER --> UPDATE_DB
+                        SYNC_REFUND --> UPDATE_DB
+
+                        UPDATE_DB --> VERIFY_OWNERSHIP[Verify Real-Time<br />Blockchain Ownership]
+
+                        VERIFY_OWNERSHIP --> CONSISTENCY[Ensure Database<br />Matches Blockchain State]
+
+                        CONSISTENCY --> POLL
+
+                        style INDEXER_START fill:#8b5cf6,color:#fff
+                        style UPDATE_DB fill:#10b981,color:#fff
+                        style CONSISTENCY fill:#f59e0b,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 9: Policies -->
             <div class="section" id="policies">
                 <h2>9. System Policies & Enforcement</h2>
-                
+
                 <h3>🚫 One-Time Transfer Policy</h3>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph LR
-    A[Original Owner] -->|First Transfer ✅| B[Second Owner]
-    B -->|❌ Cannot Transfer| C[Third Owner]
-    
-    style A fill:#10b981,color:#fff
-    style B fill:#f59e0b,color:#fff
-    style C fill:#ef4444,color:#fff
+                        graph LR
+                        A[Original Owner] -->|First Transfer ✅| B[Second Owner]
+                        B -->|❌ Cannot Transfer| C[Third Owner]
+
+                        style A fill:#10b981,color:#fff
+                        style B fill:#f59e0b,color:#fff
+                        style C fill:#ef4444,color:#fff
                     </div>
                 </div>
-                
+
                 <div class="warning-box">
                     <strong>Enforcement Mechanism:</strong>
                     <ul>
@@ -589,24 +589,24 @@ graph LR
                         <li>Prevents ticket scalping and resale chains</li>
                     </ul>
                 </div>
-                
+
                 <h3>👤 One Ticket Per Wallet Policy</h3>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    USER[User Wallet] --> CHECK{Has Ticket<br/>for Event?}
-    CHECK -->|No| ALLOW[✅ Can Purchase]
-    CHECK -->|Yes| BLOCK[❌ Cannot Purchase]
-    
-    ALLOW --> PURCHASE[Purchase Ticket]
-    PURCHASE --> FLAG[Set hasBoughtTicketForEvent = true]
-    
-    style USER fill:#3b82f6,color:#fff
-    style ALLOW fill:#10b981,color:#fff
-    style BLOCK fill:#ef4444,color:#fff
+                        graph TD
+                        USER[User Wallet] --> CHECK{Has Ticket<br />for Event?}
+                        CHECK -->|No| ALLOW[✅ Can Purchase]
+                        CHECK -->|Yes| BLOCK[❌ Cannot Purchase]
+
+                        ALLOW --> PURCHASE[Purchase Ticket]
+                        PURCHASE --> FLAG[Set hasBoughtTicketForEvent = true]
+
+                        style USER fill:#3b82f6,color:#fff
+                        style ALLOW fill:#10b981,color:#fff
+                        style BLOCK fill:#ef4444,color:#fff
                     </div>
                 </div>
-                
+
                 <div class="warning-box">
                     <strong>Enforcement Mechanism:</strong>
                     <ul>
@@ -617,11 +617,11 @@ graph TD
                     </ul>
                 </div>
             </div>
-            
+
             <!-- Section 10: Tech Stack -->
             <div class="section" id="tech-stack">
                 <h2>10. Technology Stack Summary</h2>
-                
+
                 <table>
                     <thead>
                         <tr>
@@ -684,11 +684,11 @@ graph TD
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Section 11: API -->
             <div class="section" id="api">
                 <h2>11. API Endpoints Overview</h2>
-                
+
                 <h3>Authentication Routes (<code>/api/auth</code>)</h3>
                 <div class="feature-list">
                     <div class="feature-item">
@@ -703,8 +703,16 @@ graph TD
                         <strong>GET /me</strong><br>
                         Get current user profile
                     </div>
+                    <div class="feature-item">
+                        <strong>POST /generate-qr-otp</strong><br>
+                        Send 2FA OTP to Email
+                    </div>
+                    <div class="feature-item">
+                        <strong>POST /verify-qr-otp</strong><br>
+                        Verify OTP & Get Signed JWT
+                    </div>
                 </div>
-                
+
                 <h3>User Routes (<code>/api/users</code>)</h3>
                 <div class="feature-list">
                     <div class="feature-item">
@@ -724,7 +732,7 @@ graph TD
                         List all organizers
                     </div>
                 </div>
-                
+
                 <h3>Event Routes (<code>/api/events</code>)</h3>
                 <div class="feature-list">
                     <div class="feature-item">
@@ -744,7 +752,7 @@ graph TD
                         Update event (organizer only)
                     </div>
                 </div>
-                
+
                 <h3>Purchase Routes (<code>/api/purchases</code>)</h3>
                 <div class="feature-list">
                     <div class="feature-item">
@@ -760,7 +768,7 @@ graph TD
                         Get purchase details
                     </div>
                 </div>
-                
+
                 <h3>Transfer Routes (<code>/api/transfers</code>)</h3>
                 <div class="feature-list">
                     <div class="feature-item">
@@ -781,48 +789,48 @@ graph TD
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section 12: Deployment -->
             <div class="section" id="deployment">
                 <h2>12. Deployment Flow</h2>
                 <div class="diagram-container">
                     <div class="mermaid">
-graph TD
-    START([Development Complete]) --> LOCAL_TEST[Test on Hardhat Local]
-    
-    LOCAL_TEST --> TEST_PASS{Tests<br/>Pass?}
-    TEST_PASS -->|No| FIX[Fix Issues]
-    FIX --> LOCAL_TEST
-    
-    TEST_PASS -->|Yes| DEPLOY_TESTNET[Deploy to Sepolia Testnet]
-    
-    DEPLOY_TESTNET --> TESTNET_TEST[Test on Testnet<br/>with Real Users]
-    
-    TESTNET_TEST --> TESTNET_PASS{Ready for<br/>Production?}
-    TESTNET_PASS -->|No| IMPROVE[Improve & Fix]
-    IMPROVE --> DEPLOY_TESTNET
-    
-    TESTNET_PASS -->|Yes| AUDIT[Security Audit<br/>Smart Contract]
-    
-    AUDIT --> AUDIT_PASS{Audit<br/>Pass?}
-    AUDIT_PASS -->|No| FIX_SECURITY[Fix Security Issues]
-    FIX_SECURITY --> AUDIT
-    
-    AUDIT_PASS -->|Yes| DEPLOY_MAINNET[Deploy to Ethereum Mainnet]
-    
-    DEPLOY_MAINNET --> PRODUCTION([🎉 Production Live!])
-    
-    style START fill:#3b82f6,color:#fff
-    style DEPLOY_MAINNET fill:#8b5cf6,color:#fff
-    style PRODUCTION fill:#10b981,color:#fff
+                        graph TD
+                        START([Development Complete]) --> LOCAL_TEST[Test on Hardhat Local]
+
+                        LOCAL_TEST --> TEST_PASS{Tests<br />Pass?}
+                        TEST_PASS -->|No| FIX[Fix Issues]
+                        FIX --> LOCAL_TEST
+
+                        TEST_PASS -->|Yes| DEPLOY_TESTNET[Deploy to Sepolia Testnet]
+
+                        DEPLOY_TESTNET --> TESTNET_TEST[Test on Testnet<br />with Real Users]
+
+                        TESTNET_TEST --> TESTNET_PASS{Ready for<br />Production?}
+                        TESTNET_PASS -->|No| IMPROVE[Improve & Fix]
+                        IMPROVE --> DEPLOY_TESTNET
+
+                        TESTNET_PASS -->|Yes| AUDIT[Security Audit<br />Smart Contract]
+
+                        AUDIT --> AUDIT_PASS{Audit<br />Pass?}
+                        AUDIT_PASS -->|No| FIX_SECURITY[Fix Security Issues]
+                        FIX_SECURITY --> AUDIT
+
+                        AUDIT_PASS -->|Yes| DEPLOY_MAINNET[Deploy to Ethereum Mainnet]
+
+                        DEPLOY_MAINNET --> PRODUCTION([🎉 Production Live!])
+
+                        style START fill:#3b82f6,color:#fff
+                        style DEPLOY_MAINNET fill:#8b5cf6,color:#fff
+                        style PRODUCTION fill:#10b981,color:#fff
                     </div>
                 </div>
             </div>
-            
+
             <!-- Features Section -->
             <div class="section">
                 <h2>✅ Key Features Implementation</h2>
-                
+
                 <div class="feature-list">
                     <div class="feature-item">
                         <strong>NFT-Based Tickets</strong><br>
@@ -874,11 +882,11 @@ graph TD
                     </div>
                 </div>
             </div>
-            
+
             <!-- Conclusion -->
             <div class="section">
                 <h2>🎯 Conclusion</h2>
-                
+
                 <div class="success-box">
                     <h3>Key Benefits of This NFT Ticketing System:</h3>
                     <ul>
@@ -889,15 +897,17 @@ graph TD
                         <li><strong>Ownership</strong> - Users truly own their NFT tickets</li>
                         <li><strong>Decentralization</strong> - IPFS storage, blockchain-based</li>
                     </ul>
-                    
-                    <p style="margin-top: 20px;"><strong>The system successfully combines Web3 technology with traditional web development to create a modern, secure, and user-friendly ticketing platform.</strong></p>
+
+                    <p style="margin-top: 20px;"><strong>The system successfully combines Web3 technology with
+                            traditional web development to create a modern, secure, and user-friendly ticketing
+                            platform.</strong></p>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
-        mermaid.initialize({ 
+        mermaid.initialize({
             startOnLoad: true,
             theme: 'default',
             flowchart: {
@@ -908,4 +918,5 @@ graph TD
         });
     </script>
 </body>
+
 </html>

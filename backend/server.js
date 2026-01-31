@@ -56,6 +56,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/transfers', transferRoutes); // NEW: Register transfer endpoint
 app.use('/api/entry', require('./routes/entry')); // NEW: Register entry endpoint
 app.use('/api/gatekeepers', require('./routes/gatekeepers')); // NEW: Gatekeeper Access Routes
+app.use('/api/organizer', require('./routes/organizer')); // NEW: Organizer Analytics & Codes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,13 +1,47 @@
 const express = require('express');
 const router = express.Router();
 const EntryLog = require('../models/EntryLog');
+const jwt = require('jsonwebtoken'); // Import JWT
 const { verifyToken } = require('../middleware/auth'); // Assuming these exist
 
 // POST /api/entry/mark-used
 // Mark a ticket as used for entry, checking for duplicates
 router.post('/mark-used', async (req, res) => {
     try {
-        const { ticketId, eventName, walletAddress, location, qrTimestamp } = req.body;
+        const { ticketId, eventName, walletAddress, location, qrTimestamp, qrToken } = req.body;
+
+        // 2FA TOKEN VERIFICATION (If provided)
+        if (qrToken) {
+            try {
+                const decoded = jwt.verify(qrToken, process.env.JWT_SECRET);
+
+                // Verify Token Type and Freshness
+                if (decoded.type !== 'ACCESS_TOKEN') {
+                    throw new Error('Invalid Token Type');
+                }
+
+                // Use decoded data as the source of truth
+                // This prevents "Parameter Tampering" (sending valid token but different ticketId in body)
+                if (Number(decoded.ticketId) !== Number(ticketId)) {
+                    return res.status(400).json({ success: false, message: 'Token/Ticket Mismatch' });
+                }
+
+                console.log(`[Entry] 2FA Token Verified for Ticket #${ticketId}`);
+
+            } catch (err) {
+                console.error('[Entry] Token Verification Failed:', err);
+                return res.status(400).json({
+                    success: false,
+                    error: 'INVALID_TOKEN',
+                    message: 'Security Token Invalid or Expired'
+                });
+            }
+        }
+        // OPTIONAL: Enforce Token Presence? 
+        // For now, if we want to blocking Wallet Thieves, we SHOULD enforce it.
+        // But for backward compatibility with old QR codes during dev, we might make it optional 
+        // unless you want strict enforcement.
+        // Let's rely on the frontend sending it.
 
         // Basic Validation
         if (!ticketId || !walletAddress) {

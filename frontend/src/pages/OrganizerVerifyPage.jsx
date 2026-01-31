@@ -54,12 +54,39 @@ const OrganizerVerifyPage = () => {
     setVerificationStatus('loading');
 
     try {
+      // 0. Helper to decode JWT (if needed)
+      const parseJwt = (token) => {
+        try {
+          return JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+          return null;
+        }
+      };
+
       // 1. Parse QR Data
       let ticketId;
+      let qrToken = null;
+      let qrTimestamp = null;
+
       try {
         const parsed = JSON.parse(qrContent);
-        ticketId = parsed.ticketId;
+
+        // CHECK FOR 2FA TOKEN (Dynamic QR)
+        if (parsed.token) {
+          qrToken = parsed.token;
+          const decoded = parseJwt(qrToken);
+          if (!decoded) throw new Error("Invalid Token Format");
+
+          ticketId = decoded.ticketId;
+          qrTimestamp = decoded.timestamp;
+          // We can also extract wallet from decoded.wallet if needed for cross-check
+        } else {
+          // LEGACY JSON
+          ticketId = parsed.ticketId;
+          qrTimestamp = parsed.timestamp;
+        }
       } catch (e) {
+        // Fallback or Raw ID
         ticketId = qrContent;
       }
 
@@ -232,7 +259,9 @@ const OrganizerVerifyPage = () => {
               ticketId: ticketId,
               eventName: ticket.eventName,
               walletAddress: ticket.buyer, // <--- ADDED: Required by EntryLog schema
-              location: { gate: 'Main Entrance' }
+              location: { gate: 'Main Entrance (Organizer)' },
+              qrToken: qrToken, // ✅ NEW: Send Dynamic Token
+              qrTimestamp: qrTimestamp // ✅ NEW: Send Timestamp
             })
           });
 
@@ -259,13 +288,13 @@ const OrganizerVerifyPage = () => {
 
           // Success - first time scan
           setVerificationStatus('valid');
-          toast.success("Ticket Verified Successfully!");
+          toast.success("Ticket Verified & Logged Successfully!");
 
         } catch (err) {
           console.error('Entry marking failed:', err);
-          // Still show as valid even if backend logging fails
+          // Show valid but warn about logging
           setVerificationStatus('valid');
-          toast.success("Ticket Verified (Backend logging unavailable)");
+          toast.error("Verified OK, but Logging Failed! Check Console.", { duration: 5000 });
         }
 
       } catch (err) {

@@ -161,161 +161,153 @@
             <div class="diagram-container">
                 <div class="mermaid">
                     graph TD
-                    START([User Opens Website]) --> CONNECT[Connect MetaMask Wallet]
+                    START(["User Opens Website"]) --> CONNECT["Connect MetaMask Wallet"]
 
-                    CONNECT --> WALLET_CONNECTED{Wallet<br />Connected?}
-                    WALLET_CONNECTED -->|No| ERROR1[❌ Connection Failed]
-                    WALLET_CONNECTED -->|Yes| CHECK_USER{User<br />Registered?}
+                    CONNECT --> WALLET_CONNECTED{"Wallet<br />Connected?"}
+                    WALLET_CONNECTED -->|No| ERROR1["❌ Connection Failed"]
+                    WALLET_CONNECTED -->|Yes| CHECK_USER{"User<br />Registered?"}
 
-                    CHECK_USER -->|No| REGISTER[Sign Up Process]
-                    REGISTER --> SIGN_MSG[Sign Message with Wallet]
-                    SIGN_MSG --> CREATE_ACCOUNT[Create Account in MongoDB]
-                    CREATE_ACCOUNT --> JWT[Receive JWT Token]
+                    CHECK_USER -->|No| REGISTER["Sign Up Process"]
+                    REGISTER --> SIGN_MSG["Sign Message with Wallet"]
+                    SIGN_MSG --> CREATE_ACCOUNT["Create Account in MongoDB"]
+                    CREATE_ACCOUNT --> JWT["Receive JWT Token"]
 
-                    CHECK_USER -->|Yes| AUTO_LOGIN[Auto Login with JWT]
-                    JWT --> CHOOSE_ROLE{Choose Role}
+                    CHECK_USER -->|Yes| AUTO_LOGIN["Auto Login with JWT"]
+                    JWT --> CHOOSE_ROLE{"Choose Role"}
                     AUTO_LOGIN --> CHOOSE_ROLE
 
-                    CHOOSE_ROLE -->|Regular User| USER_PATH[USER PATH]
-                    CHOOSE_ROLE -->|Organizer| ORG_PATH[ORGANIZER PATH]
+                    CHOOSE_ROLE -->|Regular User| USER_PATH["USER PATH"]
+                    CHOOSE_ROLE -->|Organizer| ORG_PATH["ORGANIZER PATH"]
+                    CHOOSE_ROLE -->|Gatekeeper| GATE_PATH["GATEKEEPER PATH"]
 
                     %% ORGANIZER PATH
-                    ORG_PATH --> CHECK_ORG{Approved<br />Organizer?}
-                    CHECK_ORG -->|No| APPLY_ORG[Apply to Become Organizer]
-                    APPLY_ORG --> WAIT_APPROVAL[Wait for Admin Approval]
-                    CHECK_ORG -->|Yes| CREATE_EVENT[Create Event]
-                    WAIT_APPROVAL --> CREATE_EVENT
+                    ORG_PATH --> CHECK_ORG{"Approved<br />Organizer?"}
+                    CHECK_ORG -->|No| APPLY_ORG["Apply to Become Organizer"]
+                    APPLY_ORG --> WAIT_APPROVAL["Wait for Approval"]
+                    CHECK_ORG -->|Yes| ORG_DASH["Organizer Dashboard"]
+
+                    ORG_DASH --> ORG_ACTIONS{"Actions"}
+                    ORG_ACTIONS -->|Create Event| CREATE_EVENT["Create Event"]
+                    ORG_ACTIONS -->|Manage Gatekeepers| MANAGE_GK["Create Gatekeeper Codes"]
+                    ORG_ACTIONS -->|View Analytics| VIEW_ANALYTICS["View Sales & Entry Logs"]
 
                     CREATE_EVENT --> FILL_DETAILS["Fill Event Details:<br />Name, Date, Price, Tickets"]
-                    FILL_DETAILS --> UPLOAD_IPFS[Upload Images to IPFS]
-                    UPLOAD_IPFS --> GET_CID[Get IPFS CIDs]
-                    GET_CID --> CALL_CONTRACT1[Call Smart Contract<br />createSale]
+                    FILL_DETAILS --> UPLOAD_IPFS["Upload Images to IPFS"]
+                    UPLOAD_IPFS --> GET_CID["Get IPFS CIDs"]
+                    GET_CID --> CALL_CONTRACT1["Call Smart Contract<br />createSale"]
 
                     CALL_CONTRACT1 --> BLOCKCHAIN1["⛓️ Blockchain:<br />• Validate Data<br />• Store Event<br />• Emit
                     TicketCreated"]
-                    BLOCKCHAIN1 --> INDEXER1[Event Indexer Detects]
-                    INDEXER1 --> SAVE_DB1[Save Event to MongoDB]
-                    SAVE_DB1 --> EVENT_LIVE([✅ Event Live!])
-
-                    EVENT_LIVE --> MANAGE_EVENT["Organizer Can:<br />• View Analytics<br />• Approve Transfers<br />•
-                    Manage Tickets"]
+                    BLOCKCHAIN1 --> INDEXER1["Event Indexer Detects"]
+                    INDEXER1 --> SAVE_DB1["Save Event to MongoDB"]
+                    SAVE_DB1 --> EVENT_LIVE(["✅ Event Live!"])
 
                     %% USER PATH
-                    USER_PATH --> BROWSE[Browse Available Events]
-                    BROWSE --> SELECT_EVENT[Select Event]
-                    SELECT_EVENT --> VIEW_DETAILS[View Event Details]
+                    USER_PATH --> BROWSE["Browse Available Events"]
+                    BROWSE --> SELECT_EVENT["Select Event"]
+                    SELECT_EVENT --> VIEW_DETAILS["View Event Details"]
 
-                    VIEW_DETAILS --> CHECK_OWNED{Already Own<br />Ticket?}
-                    CHECK_OWNED -->|Yes| BLOCKED1[❌ 1 Ticket Per Wallet]
-                    CHECK_OWNED -->|No| BUY_TICKET[Click Buy Ticket]
+                    VIEW_DETAILS --> CHECK_OWNED{"Already Own<br />Ticket?"}
+                    CHECK_OWNED -->|Yes| BLOCKED1["❌ 1 Ticket Per Wallet Limit"]
+                    CHECK_OWNED -->|No| BUY_TICKET["Click Buy Ticket"]
 
-                    BUY_TICKET --> METAMASK_TX[MetaMask Transaction Popup]
-                    METAMASK_TX --> CONFIRM{Confirm<br />Payment?}
-                    CONFIRM -->|No| CANCEL[Purchase Cancelled]
+                    BUY_TICKET --> METAMASK_TX["MetaMask Transaction Popup"]
+                    METAMASK_TX --> CONFIRM{"Confirm<br />Payment?"}
+                    CONFIRM -->|No| CANCEL["Purchase Cancelled"]
 
-                    CONFIRM -->|Yes| BLOCKCHAIN2["⛓️ Blockchain:<br />• Verify Payment<br />• Check Availability<br />•
-                    Transfer ETH to Organizer<br />• Create Ticket Instance<br />• Mark User as Holder"]
+                    CONFIRM -->|Yes| BLOCKCHAIN2["⛓️ Blockchain:<br />• Verify Price<br />• Transfer ETH to
+                    Organizer<br />• Mint Ticket to User<br />• Update Availability"]
 
-                    BLOCKCHAIN2 --> TX_SUCCESS{Success?}
-                    TX_SUCCESS -->|No| ERROR2[❌ Transaction Failed]
-                    TX_SUCCESS -->|Yes| INDEXER2[Event Indexer Syncs]
+                    BLOCKCHAIN2 --> TX_SUCCESS{"Success?"}
+                    TX_SUCCESS -->|No| ERROR2["❌ Transaction Failed"]
+                    TX_SUCCESS -->|Yes| INDEXER2["Event Indexer Syncs"]
 
-                    INDEXER2 --> SAVE_DB2[Update MongoDB Purchase]
-                    SAVE_DB2 --> PURCHASE_DONE([✅ Purchase Complete!])
+                    INDEXER2 --> SAVE_DB2["Update MongoDB Purchase"]
+                    SAVE_DB2 --> PURCHASE_DONE(["✅ Purchase Complete!"])
 
-                    PURCHASE_DONE --> MY_TICKETS[Go to My Tickets]
-                    MY_TICKETS --> VIEW_TICKET[View Purchased Ticket]
+                    PURCHASE_DONE --> MY_TICKETS["Go to My Tickets"]
+                    MY_TICKETS --> VIEW_TICKET["View Purchased Ticket"]
 
-                    VIEW_TICKET --> CHECK_DOWNLOADED{NFT Already<br />Downloaded?}
-                    CHECK_DOWNLOADED -->|Yes| SHOW_TICKET[Display Ticket with QR]
-                    CHECK_DOWNLOADED -->|No| DOWNLOAD_BTN[Click Download Ticket]
+                    VIEW_TICKET --> CHECK_DOWNLOADED{"NFT Already<br />Downloaded?"}
+                    CHECK_DOWNLOADED -->|Yes| TICKET_ACTIONS
+                    CHECK_DOWNLOADED -->|No| DOWNLOAD_BTN["Click Download Ticket"]
 
-                    DOWNLOAD_BTN --> CALL_CONTRACT2[Call Smart Contract<br />downloadTicket]
+                    DOWNLOAD_BTN --> CALL_CONTRACT2["Call Smart Contract<br />downloadTicket"]
                     CALL_CONTRACT2 --> BLOCKCHAIN3["⛓️ Blockchain:<br />• Verify Ownership<br />• Mint ERC721 NFT<br />•
                     Mark as Downloaded"]
 
-                    BLOCKCHAIN3 --> INDEXER3[Event Indexer Syncs]
-                    INDEXER3 --> SAVE_DB3[Update MongoDB Status]
-                    SAVE_DB3 --> GENERATE_QR[Generate QR Code]
-                    GENERATE_QR --> SHOW_TICKET
+                    BLOCKCHAIN3 --> INDEXER3["Event Indexer Syncs"]
+                    INDEXER3 --> SAVE_DB3["Mark Downloaded in DB"]
+                    SAVE_DB3 --> TICKET_ACTIONS{"Ticket Options"}
 
-                    SHOW_TICKET --> TICKET_ACTIONS{What to Do?}
+                    %% 2FA REVEAL FLOW
+                    TICKET_ACTIONS -->|Reveal Code| REVEAL_BTN["Click Reveal QR"]
+                    REVEAL_BTN --> REQ_OTP["Request OTP (Backend)"]
+                    REQ_OTP --> SEND_EMAIL["📧 Send 6-Digit OTP via Email"]
+                    SEND_EMAIL --> USER_INPUT["User Enters OTP"]
+                    USER_INPUT --> VERIFY_OTP{"Verify OTP"}
 
-                    TICKET_ACTIONS -->|Print| PRINT[Print Ticket]
-                    TICKET_ACTIONS -->|Transfer| TRANSFER_REQ[Request Transfer]
-                    TICKET_ACTIONS -->|Verify| VERIFY_FLOW[Verify Ticket]
+                    VERIFY_OTP -->|Invalid| ERROR_OTP["❌ Invalid Code"]
+                    VERIFY_OTP -->|Valid| GEN_TOKEN["Generate Signed JWT (qrToken)"]
+
+                    GEN_TOKEN --> DISPLAY_QR["Display Dynamic QR Code"]
+                    DISPLAY_QR --> TIMER["Starts 30s Refresh Timer"]
+                    TIMER --> REFRESH_QR["Auto-Refresh QR Pattern"]
 
                     %% TRANSFER FLOW
+                    TICKET_ACTIONS -->|Transfer| TRANSFER_REQ["Request Transfer"]
                     TRANSFER_REQ --> FILL_TRANSFER["Fill Transfer Form:<br />Recipient Address"]
-                    FILL_TRANSFER --> SUBMIT_TRANSFER[Submit to Backend]
-                    SUBMIT_TRANSFER --> SAVE_DB4[Save Request to MongoDB]
-                    SAVE_DB4 --> NOTIFY_ORG[Notify Organizer]
+                    FILL_TRANSFER --> SUBMIT_TRANSFER["Submit to Backend"]
+                    SUBMIT_TRANSFER --> SAVE_DB4["Save Request to MongoDB"]
+                    SAVE_DB4 --> NOTIFY_ORG["Notify Organizer"]
 
-                    NOTIFY_ORG --> ORG_DECISION{Organizer<br />Approves?}
-                    ORG_DECISION -->|No| REJECT[❌ Transfer Rejected]
-                    ORG_DECISION -->|Yes| CHECK_SECOND{Already<br />Transferred?}
+                    NOTIFY_ORG --> ORG_DECISION{"Organizer<br />Approves?"}
+                    ORG_DECISION -->|No| REJECT["❌ Transfer Rejected"]
+                    ORG_DECISION -->|Yes| CHECK_SECOND{"Already<br />Transferred?"}
 
-                    CHECK_SECOND -->|Yes| BLOCKED2[❌ One-Time Transfer Policy]
-                    CHECK_SECOND -->|No| CHECK_RECIPIENT{Recipient<br />Has Ticket?}
+                    CHECK_SECOND -->|Yes| BLOCKED2["❌ One-Time Transfer Policy"]
+                    CHECK_SECOND -->|No| CHECK_RECIPIENT{"Recipient<br />Has Ticket?"}
 
-                    CHECK_RECIPIENT -->|Yes| BLOCKED3[❌ Recipient Already Owns]
-                    CHECK_RECIPIENT -->|No| EXECUTE_TRANSFER[Organizer Calls<br />adminTransferTicket]
+                    CHECK_RECIPIENT -->|Yes| BLOCKED3["❌ Recipient Already Owns"]
+                    CHECK_RECIPIENT -->|No| EXECUTE_TRANSFER["Organizer Calls<br />adminTransferTicket"]
 
                     EXECUTE_TRANSFER --> BLOCKCHAIN4["⛓️ Blockchain:<br />• Remove from Sender<br />• Add to
                     Recipient<br />• Mark as Second Hand<br />• Transfer NFT"]
 
-                    BLOCKCHAIN4 --> INDEXER4[Event Indexer Syncs]
-                    INDEXER4 --> SAVE_DB5[Update MongoDB Ownership]
-                    SAVE_DB5 --> TRANSFER_DONE([✅ Transfer Complete!])
+                    BLOCKCHAIN4 --> INDEXER4["Event Indexer Syncs"]
+                    INDEXER4 --> SAVE_DB5["Update MongoDB Ownership"]
+                    SAVE_DB5 --> TRANSFER_DONE(["✅ Transfer Complete!"])
 
-                    TRANSFER_DONE --> NEW_OWNER["New Owner:<br />• Can Download NFT<br />• Cannot Transfer Again"]
-                    TRANSFER_DONE --> OLD_OWNER["Old Owner:<br />• Loses Ticket<br />• Can Buy Again"]
+                    %% GATEKEEPER PATH
+                    GATE_PATH --> GK_LOGIN["Login with Access Code"]
+                    GK_LOGIN --> GK_SCANNER["Open QR Scanner"]
 
-                    %% VERIFY FLOW
-                    VERIFY_FLOW --> SCAN_QR[Scan QR Code]
-                    SCAN_QR --> GET_TICKET_ID[Extract Ticket ID]
-                    GET_TICKET_ID --> CALL_VERIFY[Call Smart Contract<br />verifyTicket]
+                    GK_SCANNER --> SCAN_QR["Scan User's Dynamic QR"]
+                    SCAN_QR --> DECODE_JWT["Decode JWT & Verify Signature"]
 
-                    CALL_VERIFY --> BLOCKCHAIN5["⛓️ Blockchain:<br />• Check Exists<br />• Check Downloaded<br />• Check
-                    Not Refunded<br />• Verify Ownership"]
+                    DECODE_JWT --> CHECK_DB_ENTRY{"Check DB State"}
+                    CHECK_DB_ENTRY -->|Used/Duplicate| REJECT_ENTRY["❌ DENY: Already Used"]
+                    CHECK_DB_ENTRY -->|Valid| LOG_ENTRY["✅ ALLOW: Log Entry in DB"]
 
-                    BLOCKCHAIN5 --> VALID{Valid?}
-                    VALID -->|No| INVALID[❌ Invalid Ticket]
-                    VALID -->|Yes| SHOW_INFO["✅ Valid Ticket!<br />Show Event Info"]
-
-                    SHOW_INFO --> ADMIN_CHECK{Admin<br />Verification?}
-                    ADMIN_CHECK -->|Yes| MARK_USED[Mark as Used in DB]
-                    ADMIN_CHECK -->|No| VERIFY_DONE([Verification Complete])
-                    MARK_USED --> VERIFY_DONE
-
-                    %% Styling
+                    %% Styles
                     style START fill:#3b82f6,color:#fff
                     style CONNECT fill:#3b82f6,color:#fff
                     style BLOCKCHAIN1 fill:#8b5cf6,color:#fff
                     style BLOCKCHAIN2 fill:#8b5cf6,color:#fff
                     style BLOCKCHAIN3 fill:#8b5cf6,color:#fff
                     style BLOCKCHAIN4 fill:#8b5cf6,color:#fff
-                    style BLOCKCHAIN5 fill:#8b5cf6,color:#fff
-                    style SAVE_DB1 fill:#10b981,color:#fff
-                    style SAVE_DB2 fill:#10b981,color:#fff
-                    style SAVE_DB3 fill:#10b981,color:#fff
-                    style SAVE_DB4 fill:#10b981,color:#fff
-                    style SAVE_DB5 fill:#10b981,color:#fff
-                    style INDEXER1 fill:#10b981,color:#fff
-                    style INDEXER2 fill:#10b981,color:#fff
-                    style INDEXER3 fill:#10b981,color:#fff
-                    style INDEXER4 fill:#10b981,color:#fff
                     style EVENT_LIVE fill:#f59e0b,color:#fff
                     style PURCHASE_DONE fill:#f59e0b,color:#fff
                     style TRANSFER_DONE fill:#f59e0b,color:#fff
-                    style VERIFY_DONE fill:#f59e0b,color:#fff
+                    style LOG_ENTRY fill:#f59e0b,color:#fff
+                    style REJECT_ENTRY fill:#ef4444,color:#fff
                     style ERROR1 fill:#ef4444,color:#fff
                     style ERROR2 fill:#ef4444,color:#fff
                     style BLOCKED1 fill:#ef4444,color:#fff
                     style BLOCKED2 fill:#ef4444,color:#fff
                     style BLOCKED3 fill:#ef4444,color:#fff
-                    style INVALID fill:#ef4444,color:#fff
-                    style SHOW_INFO fill:#10b981,color:#fff
+                    style SEND_EMAIL fill:#10b981,color:#fff
+                    style GEN_TOKEN fill:#10b981,color:#fff
                 </div>
             </div>
 
@@ -326,9 +318,10 @@
                     <li><strong>Smart Contract</strong> - All ticket operations happen on-chain (purple nodes)</li>
                     <li><strong>Event Indexer</strong> - Automatically syncs blockchain events to MongoDB</li>
                     <li><strong>One Ticket Per Wallet</strong> - Enforced by smart contract</li>
-                    <li><strong>One-Time Transfer</strong> - Tickets can only be transferred once</li>
-                    <li><strong>NFT Ownership</strong> - Users truly own their tickets as ERC721 tokens</li>
-                    <li><strong>QR Verification</strong> - Tickets verified against blockchain state</li>
+                    <li><strong>2FA Security</strong> - Email OTP required to reveal QR codes (prevents wallet theft)
+                    </li>
+                    <li><strong>Dynamic QR Codes</strong> - Refresh every 30s to prevent screenshot attacks</li>
+                    <li><strong>Gatekeeper App</strong> - Dedicated scanner for event staff to verify entrance</li>
                 </ul>
             </div>
         </div>

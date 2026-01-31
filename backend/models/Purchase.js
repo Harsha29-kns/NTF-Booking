@@ -7,12 +7,12 @@ const purchaseSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  
-  // MERGED: Ticket ID (Number to match Smart Contract, Unique to prevent duplicates)
+
+  // MERGED: Ticket ID (Number to match Smart Contract)
+  // NOTE: Not unique because same ticketId can exist across different blockchain sessions
   ticketId: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
   },
 
   // Link to Registered User (New for Online Booking)
@@ -21,7 +21,7 @@ const purchaseSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
-  
+
   // On-chain data
   contractAddress: {
     type: String,
@@ -42,7 +42,7 @@ const purchaseSchema = new mongoose.Schema({
     type: String, // Store as string to handle large numbers (Wei)
     required: true
   },
-  
+
   // Transaction data
   purchaseTxHash: {
     type: String,
@@ -59,7 +59,7 @@ const purchaseSchema = new mongoose.Schema({
     lowercase: true,
     default: null
   },
-  
+
   // Event data snapshot
   eventName: {
     type: String,
@@ -81,7 +81,7 @@ const purchaseSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   // Purchase status
   status: {
     type: String,
@@ -105,14 +105,14 @@ const purchaseSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  
+
   // MERGED: Buyer information (Legacy/Offline support)
   buyerInfo: {
     name: {
       type: String,
       trim: true,
       maxlength: 100,
-      default: '' 
+      default: ''
     },
     phone: {
       type: String,
@@ -133,7 +133,7 @@ const purchaseSchema = new mongoose.Schema({
       default: ''
     }
   },
-  
+
   // Additional data
   gasUsed: {
     purchase: Number,
@@ -150,7 +150,7 @@ const purchaseSchema = new mongoose.Schema({
     download: Number,
     refund: Number
   },
-  
+
   // User experience data
   rating: {
     type: Number,
@@ -178,12 +178,14 @@ purchaseSchema.index({ buyer: 1 });
 purchaseSchema.index({ seller: 1 });
 purchaseSchema.index({ status: 1 });
 purchaseSchema.index({ purchaseDate: -1 });
+// Compound unique index to prevent duplicate purchases (same transaction)
+purchaseSchema.index({ purchaseTxHash: 1 }, { unique: true });
 purchaseSchema.index({ eventDate: 1 });
 purchaseSchema.index({ purchaseTxHash: 1 });
 purchaseSchema.index({ downloadTxHash: 1 });
 
 // Virtual for purchase age
-purchaseSchema.virtual('age').get(function() {
+purchaseSchema.virtual('age').get(function () {
   const now = new Date();
   const diff = now - this.purchaseDate;
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -191,23 +193,23 @@ purchaseSchema.virtual('age').get(function() {
 });
 
 // Virtual for can download
-purchaseSchema.virtual('canDownload').get(function() {
+purchaseSchema.virtual('canDownload').get(function () {
   return this.status === 'purchased' && !this.downloadTxHash;
 });
 
 // Virtual for can refund
-purchaseSchema.virtual('canRefund').get(function() {
+purchaseSchema.virtual('canRefund').get(function () {
   const now = new Date();
-  return this.status === 'purchased' && 
-         now > this.eventDate && 
-         !this.downloadTxHash && 
-         !this.refundTxHash;
+  return this.status === 'purchased' &&
+    now > this.eventDate &&
+    !this.downloadTxHash &&
+    !this.refundTxHash;
 });
 
 // Method to update status
-purchaseSchema.methods.updateStatus = function(newStatus, txHash = null, additionalData = {}) {
+purchaseSchema.methods.updateStatus = function (newStatus, txHash = null, additionalData = {}) {
   this.status = newStatus;
-  
+
   switch (newStatus) {
     case 'downloaded':
       this.downloadDate = new Date();
@@ -228,12 +230,12 @@ purchaseSchema.methods.updateStatus = function(newStatus, txHash = null, additio
       this.refundDate = new Date();
       break;
   }
-  
+
   return this.save();
 };
 
 // Method to add review
-purchaseSchema.methods.addReview = function(rating, review) {
+purchaseSchema.methods.addReview = function (rating, review) {
   this.rating = rating;
   this.review = review;
   this.reviewDate = new Date();
@@ -241,26 +243,26 @@ purchaseSchema.methods.addReview = function(rating, review) {
 };
 
 // Static method to get user purchases
-purchaseSchema.statics.getUserPurchases = function(walletAddress, status = null) {
+purchaseSchema.statics.getUserPurchases = function (walletAddress, status = null) {
   const query = { buyer: walletAddress.toLowerCase() };
   if (status) query.status = status;
-  
+
   return this.find(query).sort({ purchaseDate: -1 });
 };
 
 // Static method to get seller sales
-purchaseSchema.statics.getSellerSales = function(walletAddress, status = null) {
+purchaseSchema.statics.getSellerSales = function (walletAddress, status = null) {
   const query = { seller: walletAddress.toLowerCase() };
   if (status) query.status = status;
-  
+
   return this.find(query).sort({ purchaseDate: -1 });
 };
 
 // Static method to get purchase statistics
-purchaseSchema.statics.getStats = function(walletAddress, isSeller = false) {
+purchaseSchema.statics.getStats = function (walletAddress, isSeller = false) {
   const field = isSeller ? 'seller' : 'buyer';
   const query = { [field]: walletAddress.toLowerCase() };
-  
+
   return this.aggregate([
     { $match: query },
     {
@@ -276,7 +278,7 @@ purchaseSchema.statics.getStats = function(walletAddress, isSeller = false) {
 // Transform JSON output
 purchaseSchema.set('toJSON', {
   virtuals: true,
-  transform: function(doc, ret) {
+  transform: function (doc, ret) {
     delete ret.__v;
     return ret;
   }

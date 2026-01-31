@@ -26,6 +26,8 @@ router.post('/', async (req, res) => {
       seller
     } = req.body;
 
+    console.log(`📝 [Purchase API] Creating purchase for Ticket #${ticketId}, Tx: ${purchaseTxHash}`);
+
     const purchaseId = `PURCHASE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const buyerWallet = walletAddress || req.user?.walletAddress || '0x0000000000000000000000000000000000000000';
 
@@ -77,6 +79,7 @@ router.post('/', async (req, res) => {
     });
 
     await purchase.save();
+    console.log(`✅ [Purchase API] Saved purchase ${purchaseId} for Ticket #${ticketId}`);
 
     // Update tickets count
     try {

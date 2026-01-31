@@ -18,6 +18,8 @@ import OrganizerTransferRequests from './pages/OrganizerTransferRequests'; // Re
 import OrganizerGatekeepers from './pages/OrganizerGatekeepers'; // NEW
 import GatekeeperLoginPage from './pages/GatekeeperLoginPage'; // NEW
 import GatekeeperScannerPage from './pages/GatekeeperScannerPage'; // NEW
+import OrganizerEventsPage from './pages/OrganizerEventsPage'; // NEW
+import OrganizerEventAnalyticsPage from './pages/OrganizerEventAnalyticsPage'; // NEW
 import './index.css';
 
 // Component to protect routes based on role
@@ -93,6 +95,24 @@ function App() {
                   element={
                     <ProtectedRoute requireOrganizer={true}>
                       <OrganizerGatekeepers />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/organizer/analytics"
+                  element={
+                    <ProtectedRoute requireOrganizer={true}>
+                      <OrganizerEventsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/organizer/analytics/:eventName"
+                  element={
+                    <ProtectedRoute requireOrganizer={true}>
+                      <OrganizerEventAnalyticsPage />
                     </ProtectedRoute>
                   }
                 />

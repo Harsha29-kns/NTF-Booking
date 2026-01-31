@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { verifyWalletSignature } = require('../middleware/auth');
+const { sendOtpEmail } = require('../services/emailService'); // Import Email Service
 
 const router = express.Router();
 
@@ -247,6 +248,106 @@ router.get('/user/:walletAddress', async (req, res) => {
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ============================================
+// 2FA OTP Logic for Ticket Access
+// ============================================
+
+// Temporary In-Memory OTP Store (Production should use Redis)
+// Format: { walletAddress: { code: "123456", expires: 1234567890 } }
+const otpStore = {};
+
+// POST /api/auth/generate-qr-otp
+router.post('/generate-qr-otp', async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+    if (!walletAddress) return res.status(400).json({ success: false, message: 'Wallet Address required' });
+
+    const user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    // Store OTP
+    otpStore[walletAddress.toLowerCase()] = { code: otp, expires };
+
+    // SEND REAL EMAIL
+    const emailSent = await sendOtpEmail(user.email, otp);
+
+    if (emailSent) {
+      console.log(`[2FA] OTP Email sent to ${user.email}`);
+      res.json({
+        success: true,
+        message: `OTP Code sent to ${user.email}`,
+        debug: 'Check Email'
+      });
+    } else {
+      console.error('[2FA] Failed to send email');
+      res.status(500).json({ success: false, message: 'Failed to send OTP Email. Check server logs.' });
+    }
+
+  } catch (error) {
+    console.error('OTP Gen Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate OTP' });
+  }
+});
+
+// POST /api/auth/verify-qr-otp
+router.post('/verify-qr-otp', async (req, res) => {
+  try {
+    const { walletAddress, otp, ticketId } = req.body;
+
+    // 1. Validate Input
+    if (!walletAddress || !otp || !ticketId) {
+      return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    // 2. Retrieve OTP
+    const stored = otpStore[walletAddress.toLowerCase()];
+
+    // 3. Check Validity
+    if (!stored) {
+      return res.status(400).json({ success: false, message: 'No OTP requested or expired' });
+    }
+    if (Date.now() > stored.expires) {
+      delete otpStore[walletAddress.toLowerCase()]; // Cleanup
+      return res.status(400).json({ success: false, message: 'OTP Expired' });
+    }
+    if (stored.code !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP Code' });
+    }
+
+    // 4. Success! Generate Signed Access Token (qrToken)
+    // This token proves 2FA was passed and allows entry for this specific ticket
+    const qrToken = jwt.sign(
+      {
+        type: 'ACCESS_TOKEN',
+        wallet: walletAddress.toLowerCase(),
+        ticketId: ticketId,
+        timestamp: Date.now()
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' } // Token valid for 5 mins for scanning
+    );
+
+    // 5. Cleanup OTP (One-time use)
+    delete otpStore[walletAddress.toLowerCase()];
+
+    console.log(`[2FA SUCCESS] Verified OTP for ${walletAddress}. Token Issued.`);
+
+    res.json({
+      success: true,
+      message: '2FA Verified',
+      data: { qrToken }
+    });
+
+  } catch (error) {
+    console.error('OTP Verify Error:', error);
+    res.status(500).json({ success: false, message: 'Verification Failed' });
   }
 });
 
