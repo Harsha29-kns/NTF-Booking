@@ -9,12 +9,15 @@ import CreateSalePage from './pages/CreateSalePage';
 import TicketListPage from './pages/TicketListPage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import VerifyTicketPage from './pages/VerifyTicketPage';
-import AdminVerifyPage from './pages/AdminVerifyPage'; // New Page for Salesmen
+import OrganizerVerifyPage from './pages/OrganizerVerifyPage'; // Renamed
 import MyTicketsPage from './pages/MyTicketsPage';
 import PrintTicketPage from './pages/PrintTicketPage';
 import TestCreatePage from './pages/TestCreatePage';
 import ProfilePage from './pages/ProfilePage';
-import AdminTransferRequests from './pages/AdminTransferRequests';
+import OrganizerTransferRequests from './pages/OrganizerTransferRequests'; // Renamed
+import OrganizerGatekeepers from './pages/OrganizerGatekeepers'; // NEW
+import GatekeeperLoginPage from './pages/GatekeeperLoginPage'; // NEW
+import GatekeeperScannerPage from './pages/GatekeeperScannerPage'; // NEW
 import './index.css';
 
 // Component to protect routes based on role
@@ -51,7 +54,9 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                
+
+                {/* Auth Routes */}
+
                 {/* Public / Customer Routes */}
                 <Route path="/tickets" element={<TicketListPage />} />
                 <Route path="/ticket/:id" element={<TicketDetailPage />} />
@@ -59,31 +64,44 @@ function App() {
                 <Route path="/verify" element={<VerifyTicketPage />} />
                 <Route path="/my-tickets" element={<MyTicketsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/admin/transfers" element={<AdminTransferRequests />} />
-                
+                <Route path="/organizer/transfers" element={<OrganizerTransferRequests />} />
+
+                {/* Gatekeeper Routes */}
+                <Route path="/gatekeeper/login" element={<GatekeeperLoginPage />} />
+                <Route path="/gatekeeper/scanner" element={<GatekeeperScannerPage />} />
+
                 {/* Protected Organizer Routes */}
-                <Route 
-                  path="/create-sale" 
+                <Route
+                  path="/create-sale"
                   element={
                     <ProtectedRoute requireOrganizer={true}>
                       <CreateSalePage />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/admin/verify" 
+                <Route
+                  path="/organizer/verify"
                   element={
                     <ProtectedRoute requireOrganizer={true}>
-                      <AdminVerifyPage />
+                      <OrganizerVerifyPage />
                     </ProtectedRoute>
-                  } 
+                  }
+                />
+
+                <Route
+                  path="/organizer/gatekeepers"
+                  element={
+                    <ProtectedRoute requireOrganizer={true}>
+                      <OrganizerGatekeepers />
+                    </ProtectedRoute>
+                  }
                 />
 
                 {/* Test Route */}
                 <Route path="/test-create" element={<TestCreatePage />} />
               </Routes>
             </Layout>
-            <Toaster 
+            <Toaster
               position="top-right"
               toastOptions={{
                 duration: 4000,

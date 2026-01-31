@@ -1,0 +1,9 @@
+.exit
+const contract = await ethers.getContractAt("TicketSale","0x5FbDB2315678afecb367f032d93F642f64180aa3"); const signers = await ethers.getSigners(); await contract.setGatekeeper(signers[0].address, true); await contract.setGatekeeper(signers[1].address, true);
+.exit
+const contract = await ethers.getContractAt("TicketSale", "0x5FbDB2315678afecb367f032d93F642f64180aa3");const signers = await ethers.getSigners();for (let i = 0; i < 5; i++) {  await contract.setGatek
+const contract = await ethers.getContractAt("TicketSale", "0x5FbDB2315678afecb367f032d93F642f64180aa3");const signers = await ethers.getSigners();for (let i = 0; i < 5; i++) {  await contract.setGatekeeper(signers[i].address, true);  console.log(`✅ Authorized: ${signers[i].address}`);}
+const signers = await ethers.getSigners();
+const contract = await ethers.getContractAt("TicketSale", "0x5FbDB2315678afecb367f032d93F642f64180aa3");i++) {  await contract.setGatekeeper(signers[i].address, true);  console.log(`✅ Authorized: ${signers[i].address}`);}
+const signers = await ethers.getSigners();
+const contract = await ethers.getContractAt("TicketSale", "0x5FbDB2315678afecb367f032d93F642f64180aa3");

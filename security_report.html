@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Report: Ticket Duplication Defense</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+        }
+        .status-badge {
+            background-color: #27ae60;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            vertical-align: middle;
+            margin-left: 15px;
+        }
+        .summary-box {
+            background-color: #e8f8f5;
+            border-left: 5px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .threat-box {
+            background-color: #fdedec;
+            border-left: 5px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        li:before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .code-snippet {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .diagram {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Security Implementation Report</h1>
+        
+        <h2>Target Threat: Ticket Duplication <span class="status-badge">SOLVED</span></h2>
+        
+        <div class="threat-box">
+            <strong>The Threat:</strong> Attackers attempting to gain entry using the same ticket multiple times (Replay Attack) or by sharing screenshots of a valid QR code with others (Cloning).
+        </div>
+
+        <div class="summary-box">
+            <strong>Executive Summary:</strong> The system now employs a <strong>Hybrid Defense Mechanism</strong> combining Dynamic QR Codes (Time-based One-Time Passwords) for the frontend and Real-Time Centralized Logging for the backend. This effectively neutralizes both offline screenshot sharing and parallel gate entry attempts.
+        </div>
+
+        <h2>Implemented Solutions</h2>
+
+        <h3>1. Dynamic QR Codes (Anti-Screenshot)</h3>
+        <p>Static QR codes are vulnerable to being screenshot and shared. We have implemented <strong>Time-Based Dynamic QRs</strong>:</p>
+        <ul>
+            <li><strong>Mechanism:</strong> The User's "Print Ticket" page auto-regenerates the QR code payload every 15 seconds.</li>
+            <li><strong>Payload:</strong> Contains <code>{ ticketId, buyerAddress, timestamp, signature }</code>.</li>
+            <li><strong>Defense:</strong> If a user screenshots the code and sends it to a friend, by the time the friend reaches the gate, the 15-second window has passed, and the scanner will reject the timestamp as <code>EXPIRED</code>.</li>
+        </ul>
+
+        <h3>2. Real-Time Entry Logging (Anti-Replay)</h3>
+        <p>To prevent the same valid ticket from being used twice (e.g., at two different gates simultaneously):</p>
+        <ul>
+            <li><strong>Mechanism:</strong> Upon a successful scan, the Backend immediately records an entry log in the secure MongoDB database.</li>
+            <li><strong>Instant Check:</strong> Before granting access, the system checks: <code>Has this ticketId been scanned in the entry logs?</code></li>
+            <li><strong>Result:</strong> If a duplicate is found, the Gatekeeper is instantly alerted with a <strong style="color: #e74c3c">DUPLICATE SCAN</strong> or <strong style="color: #c0392b">ALREADY USED</strong> error, including the timestamp of the previous entry.</li>
+        </ul>
+
+        <h3>3. Hybrid Verification Architecture</h3>
+        <div class="diagram">
+            <strong>Process Flow:</strong><br>
+            [QR Scan] ➔ [Check Blockchain Ownership] ➔ [Check DB for Prior Entry] ➔ [Grant Access]
+        </div>
+        <p>We utilize the Blockchain for what it does best (Ownership Security) and the Database for what it does best (Speed & Anti-Replay):</p>
+        <ul>
+            <li><strong>Blockchain (Solidity):</strong> Verifies that the ticket is authentic and owned by the user. (Immutable Source of Truth)</li>
+            <li><strong>Database (MongoDB):</strong> key functionality for "Mark as Used". This avoids the 15-second block confirmation delay and gas fees, complying with venue requirements for rapid throughput.</li>
+        </ul>
+
+        <h2>Code Validation</h2>
+        <p>The solution is enforced across the stack:</p>
+        <div class="code-snippet">
+// Frontend: GatekeeperScannerPage.jsx
+if (result.error === 'DUPLICATE_SCAN') {
+    setVerificationStatus('duplicate'); // Triggers Orange Warning UI
+}
+
+// Backend: EntryLog.js
+const hasEntry = await EntryLog.findOne({ ticketId: ticketId, scanResult: 'success' });
+if (hasEntry) {
+    return res.status(400).json({ error: 'ALREADY_USED' });
+}
+        </div>
+
+        <div class="footer">
+            Generated by Antigravity AI • NFT Ticketing System Security Audit • 2026
+        </div>
+    </div>
+</body>
+</html>

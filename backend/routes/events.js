@@ -7,44 +7,44 @@ const router = express.Router();
 // GET /api/events - Get all events with filtering and search
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      category, 
-      city, 
-      search, 
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      city,
+      search,
       featured,
       sortBy = 'eventDate',
       sortOrder = 'asc'
     } = req.query;
-    
+
     // Build query
     const query = { status: 'active' };
-    
+
     if (category) query.category = category;
     if (city) query['venue.city'] = new RegExp(city, 'i');
     if (featured === 'true') query.featured = true;
-    
+
     // Search functionality
     if (search) {
       query.$text = { $search: search };
     }
-    
+
     // Sort options
     const sortOptions = {};
     if (search) {
       sortOptions.score = { $meta: 'textScore' };
     }
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
-    
+
     const events = await Event.find(query, search ? { score: { $meta: 'textScore' } } : {})
       .sort(sortOptions)
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .populate('seller', 'username walletAddress organizerInfo');
-    
+
     const total = await Event.countDocuments(query);
-    
+
     res.json({
       success: true,
       data: {
@@ -66,11 +66,39 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
+// GET /api/events/my-events - Get events created by logged-in organizer
+router.get('/my-events', authenticateToken, async (req, res) => {
+  try {
+    console.log('[DEBUG] /my-events called');
+    console.log('[DEBUG] User:', req.user ? req.user._id : 'No user');
+    console.log('[DEBUG] Wallet:', req.user ? req.user.walletAddress : 'No wallet');
+
+    if (!req.user || !req.user.walletAddress) {
+      throw new Error('User or wallet address missing from request');
+    }
+
+    const events = await Event.find({
+      seller: req.user.walletAddress.toLowerCase()
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: { events }
+    });
+  } catch (error) {
+    console.error('Get my events error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get your events'
+    });
+  }
+});
+
 // GET /api/events/available - Get available events (not sold)
 router.get('/available', async (req, res) => {
   try {
     const events = await Event.getAvailable();
-    
+
     res.json({
       success: true,
       data: { events }
@@ -88,9 +116,9 @@ router.get('/available', async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { q, filters = {} } = req.query;
-    
+
     const events = await Event.search(q, filters);
-    
+
     res.json({
       success: true,
       data: { events }
@@ -104,26 +132,71 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// GET /api/events/categories/list - Get available categories
+router.get('/categories/list', async (req, res) => {
+  try {
+    const categories = await Event.distinct('category');
+
+    res.json({
+      success: true,
+      data: { categories }
+    });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get categories'
+    });
+  }
+});
+
+// GET /api/events/featured - Get featured events
+router.get('/featured/list', async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    const events = await Event.find({
+      featured: true,
+      status: 'active',
+      eventDate: { $gt: new Date() }
+    })
+      .sort({ eventDate: 1 })
+      .limit(parseInt(limit))
+      .populate('seller', 'username walletAddress organizerInfo');
+
+    res.json({
+      success: true,
+      data: { events }
+    });
+  } catch (error) {
+    console.error('Get featured events error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get featured events'
+    });
+  }
+});
+
 // GET /api/events/:ticketId - Get event by ticket ID
 router.get('/:ticketId', optionalAuth, async (req, res) => {
   try {
     const { ticketId } = req.params;
-    
+
     const event = await Event.findOne({ ticketId: parseInt(ticketId) })
       .populate('seller', 'username walletAddress organizerInfo');
-    
+
     if (!event) {
       return res.status(404).json({
         success: false,
         message: 'Event not found'
       });
     }
-    
+
     // Increment views if user is not the seller
     if (!req.user || req.user.walletAddress !== event.seller) {
       await event.incrementViews();
     }
-    
+
     res.json({
       success: true,
       data: { event }
@@ -157,7 +230,7 @@ router.post('/', authenticateToken, requireOrganizer, async (req, res) => {
       ageRestriction,
       tags
     } = req.body;
-    
+
     // Check if event already exists
     const existingEvent = await Event.findOne({ ticketId });
     if (existingEvent) {
@@ -166,7 +239,7 @@ router.post('/', authenticateToken, requireOrganizer, async (req, res) => {
         message: 'Event already exists'
       });
     }
-    
+
     // Create event
     const event = new Event({
       ticketId,
@@ -186,12 +259,12 @@ router.post('/', authenticateToken, requireOrganizer, async (req, res) => {
       ageRestriction,
       tags
     });
-    
+
     await event.save();
-    
+
     // Update user stats
     await req.user.updateStats('event_created');
-    
+
     res.status(201).json({
       success: true,
       message: 'Event created successfully',
@@ -219,16 +292,16 @@ router.put('/:ticketId', authenticateToken, async (req, res) => {
       tags,
       featured
     } = req.body;
-    
+
     const event = await Event.findOne({ ticketId: parseInt(ticketId) });
-    
+
     if (!event) {
       return res.status(404).json({
         success: false,
         message: 'Event not found'
       });
     }
-    
+
     // Check ownership
     if (event.seller !== req.user.walletAddress) {
       return res.status(403).json({
@@ -236,7 +309,7 @@ router.put('/:ticketId', authenticateToken, async (req, res) => {
         message: 'Not authorized to update this event'
       });
     }
-    
+
     // Update allowed fields
     const updateData = {};
     if (description !== undefined) updateData.description = description;
@@ -246,13 +319,13 @@ router.put('/:ticketId', authenticateToken, async (req, res) => {
     if (ageRestriction !== undefined) updateData.ageRestriction = ageRestriction;
     if (tags !== undefined) updateData.tags = tags;
     if (featured !== undefined && req.user.isOrganizer) updateData.featured = featured;
-    
+
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     res.json({
       success: true,
       message: 'Event updated successfully',
@@ -271,16 +344,16 @@ router.put('/:ticketId', authenticateToken, async (req, res) => {
 router.delete('/:ticketId', authenticateToken, async (req, res) => {
   try {
     const { ticketId } = req.params;
-    
+
     const event = await Event.findOne({ ticketId: parseInt(ticketId) });
-    
+
     if (!event) {
       return res.status(404).json({
         success: false,
         message: 'Event not found'
       });
     }
-    
+
     // Check ownership
     if (event.seller !== req.user.walletAddress) {
       return res.status(403).json({
@@ -288,11 +361,11 @@ router.delete('/:ticketId', authenticateToken, async (req, res) => {
         message: 'Not authorized to delete this event'
       });
     }
-    
+
     // Soft delete by changing status
     event.status = 'cancelled';
     await event.save();
-    
+
     res.json({
       success: true,
       message: 'Event deleted successfully'
@@ -306,50 +379,7 @@ router.delete('/:ticketId', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/events/categories/list - Get available categories
-router.get('/categories/list', async (req, res) => {
-  try {
-    const categories = await Event.distinct('category');
-    
-    res.json({
-      success: true,
-      data: { categories }
-    });
-  } catch (error) {
-    console.error('Get categories error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get categories'
-    });
-  }
-});
 
-// GET /api/events/featured - Get featured events
-router.get('/featured/list', async (req, res) => {
-  try {
-    const { limit = 10 } = req.query;
-    
-    const events = await Event.find({
-      featured: true,
-      status: 'active',
-      eventDate: { $gt: new Date() }
-    })
-    .sort({ eventDate: 1 })
-    .limit(parseInt(limit))
-    .populate('seller', 'username walletAddress organizerInfo');
-    
-    res.json({
-      success: true,
-      data: { events }
-    });
-  } catch (error) {
-    console.error('Get featured events error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get featured events'
-    });
-  }
-});
 
 module.exports = router;
 

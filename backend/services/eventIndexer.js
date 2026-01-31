@@ -16,7 +16,7 @@ class EventIndexer {
     try {
       // Initialize provider
       this.provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'http://127.0.0.1:8545');
-      
+
       // Test connection
       try {
         await this.provider.getBlockNumber();
@@ -25,23 +25,23 @@ class EventIndexer {
         console.log('⚠️ Blockchain not available, will retry when connection is established');
         // Don't fail initialization, just log the warning
       }
-      
+
       // Contract ABI (simplified for events we need)
       const contractABI = [
         "event TicketCreated(uint256 indexed ticketId, string eventName, address indexed seller, uint256 price, uint256 eventDate)",
         "event TicketPurchased(uint256 indexed ticketId, address indexed buyer, uint256 price)",
         "event TicketDownloaded(uint256 indexed ticketId, address indexed buyer)",
         "event TicketRefunded(uint256 indexed ticketId, address indexed buyer, uint256 refundAmount)",
-        "function getTicket(uint256 ticketId) view returns (tuple(uint256 ticketId, string eventName, string organizer, uint256 eventDate, uint256 saleEndDate, uint256 price, string posterUrl, string ticketImageUrl, address seller, address buyer, bool isSold, bool isDownloaded, bool isRefunded))"
+        "function getTicket(uint256 ticketId) view returns (tuple(uint256 ticketId, string eventName, string organizer, uint256 eventDate, uint256 saleEndDate, uint256 price, string posterUrl, string ticketImageUrl, address seller, address buyer, bool isSold, bool isDownloaded, bool isRefunded, bool isSecondHand, uint256 totalTickets, uint256 availableTickets))"
       ];
-      
+
       const contractAddress = process.env.CONTRACT_ADDRESS;
       this.contract = new ethers.Contract(contractAddress, contractABI, this.provider);
-      
+
       console.log('✅ Event indexer initialized');
       console.log(`📋 Contract: ${contractAddress}`);
       console.log(`🔗 RPC: ${process.env.RPC_URL || 'http://127.0.0.1:8545'}`);
-      
+
       return true;
     } catch (error) {
       console.error('❌ Failed to initialize event indexer:', error);
@@ -63,7 +63,7 @@ class EventIndexer {
 
     this.isRunning = true;
     console.log('🚀 Starting event indexer...');
-    
+
     // Get the latest block to start from
     try {
       this.lastProcessedBlock = await this.provider.getBlockNumber();
@@ -83,20 +83,20 @@ class EventIndexer {
 
     try {
       const currentBlock = await this.provider.getBlockNumber();
-      
+
       if (currentBlock > this.lastProcessedBlock) {
         console.log(`🔍 Processing blocks ${this.lastProcessedBlock + 1} to ${currentBlock}`);
-        
+
         // Process events in batches
         const batchSize = 1000; // Process 1000 blocks at a time
         let fromBlock = this.lastProcessedBlock + 1;
-        
+
         while (fromBlock <= currentBlock) {
           const toBlock = Math.min(fromBlock + batchSize - 1, currentBlock);
           await this.processBlockRange(fromBlock, toBlock);
           fromBlock = toBlock + 1;
         }
-        
+
         this.lastProcessedBlock = currentBlock;
       }
     } catch (error) {
@@ -138,7 +138,7 @@ class EventIndexer {
     for (const event of events) {
       try {
         const { ticketId, eventName, seller, price, eventDate } = event.args;
-        
+
         // Check if event already exists
         const existingEvent = await Event.findOne({ ticketId: ticketId.toString() });
         if (existingEvent) {
@@ -147,10 +147,10 @@ class EventIndexer {
 
         // Get full ticket data from contract
         const ticketData = await this.contract.getTicket(ticketId);
-        
+
         // Create or update user
         await User.findOrCreate(seller, { isOrganizer: true });
-        
+
         // Create event record
         const eventRecord = new Event({
           ticketId: ticketId.toString(),
@@ -191,13 +191,13 @@ class EventIndexer {
         const eventTicketId = parseInt(ticketId); // The REAL ID from Blockchain
 
         console.log(`🔍 Processing TicketPurchased: ID ${eventTicketId} | Tx: ${txHash}`);
-        
+
         // 1. Update Event Record (Availability)
         await Event.findOneAndUpdate(
           { ticketId: ticketId.toString() },
-          { 
-            isSold: true, 
-            buyer: buyer.toLowerCase() 
+          {
+            isSold: true,
+            buyer: buyer.toLowerCase()
           }
         );
 
@@ -207,32 +207,32 @@ class EventIndexer {
 
         // Fallback: If not found by hash, try ticketId (legacy support)
         if (!purchase) {
-             purchase = await Purchase.findOne({ 
-                 $or: [
-                     { ticketId: eventTicketId },
-                     { ticketId: eventTicketId.toString() }
-                 ]
-             });
+          purchase = await Purchase.findOne({
+            $or: [
+              { ticketId: eventTicketId },
+              { ticketId: eventTicketId.toString() }
+            ]
+          });
         }
 
         // 3. Auto-Correct DB if Mismatch Found
         if (purchase) {
-             if (parseInt(purchase.ticketId) !== eventTicketId) {
-                 console.warn(`⚠️ FIXING MISMATCH: Updating DB Ticket ID from ${purchase.ticketId} to ${eventTicketId}`);
-                 purchase.ticketId = eventTicketId; // Sync DB with Blockchain
-             }
+          if (parseInt(purchase.ticketId) !== eventTicketId) {
+            console.warn(`⚠️ FIXING MISMATCH: Updating DB Ticket ID from ${purchase.ticketId} to ${eventTicketId}`);
+            purchase.ticketId = eventTicketId; // Sync DB with Blockchain
+          }
 
-             // Confirm Status
-             purchase.status = 'purchased';
-             if (!purchase.blockNumber) purchase.blockNumber = {};
-             purchase.blockNumber.purchase = event.blockNumber;
-             
-             await purchase.save();
-             console.log(`✅ Synced Purchase Record for Ticket #${eventTicketId}`);
+          // Confirm Status
+          purchase.status = 'purchased';
+          if (!purchase.blockNumber) purchase.blockNumber = {};
+          purchase.blockNumber.purchase = event.blockNumber;
+
+          await purchase.save();
+          console.log(`✅ Synced Purchase Record for Ticket #${eventTicketId}`);
         } else {
-             console.warn(`⚠️ Purchase DB record not found for Ticket #${eventTicketId} (Tx: ${txHash})`);
+          console.warn(`⚠️ Purchase DB record not found for Ticket #${eventTicketId} (Tx: ${txHash})`);
         }
-        
+
         // 4. Update user stats if user exists
         const buyerUser = await User.findOne({ walletAddress: buyer.toLowerCase() });
         if (buyerUser) {
@@ -251,7 +251,7 @@ class EventIndexer {
     for (const event of events) {
       try {
         const { ticketId, buyer } = event.args;
-        
+
         // Update event record
         await Event.findOneAndUpdate(
           { ticketId: ticketId.toString() },
@@ -282,13 +282,13 @@ class EventIndexer {
     for (const event of events) {
       try {
         const { ticketId, buyer, refundAmount } = event.args;
-        
+
         // Update event record
         await Event.findOneAndUpdate(
           { ticketId: ticketId.toString() },
-          { 
-            isRefunded: true, 
-            status: 'cancelled' 
+          {
+            isRefunded: true,
+            status: 'cancelled'
           }
         );
 

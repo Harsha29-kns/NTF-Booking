@@ -4,12 +4,13 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { getContractReadOnly } from '../utils/web3';
 import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
-import { 
+import {
   Loader2,
   ArrowLeft,
   Shield,
   Maximize2,
-  Info
+  Info,
+  Clock // Added Clock icon
 } from 'lucide-react';
 
 const PrintTicketPage = () => {
@@ -31,7 +32,7 @@ const PrintTicketPage = () => {
       setIsLoading(true);
       const contract = getContractReadOnly();
       const ticketData = await contract.getTicket(id);
-      
+
       setTicket({
         id: id,
         eventName: ticketData.eventName,
@@ -53,12 +54,33 @@ const PrintTicketPage = () => {
     return ticket?.buyer && account && ticket.buyer.toLowerCase() === account.toLowerCase();
   };
 
+  // Dynamic QR Logic
+  const REFRESH_INTERVAL = 15; // Seconds
+  const [timestamp, setTimestamp] = useState(Date.now());
+  const [timeLeft, setTimeLeft] = useState(REFRESH_INTERVAL);
+
+  useEffect(() => {
+    if (!ticket) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setTimestamp(Date.now());
+          return REFRESH_INTERVAL;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [ticket]);
+
   // Generate the QR payload
   const qrPayload = ticket ? JSON.stringify({
     ticketId: ticket.id,
     eventName: ticket.eventName,
     buyer: ticket.buyer,
-    timestamp: Date.now() // Adds uniqueness to prevent static screenshot replay attacks if validated strictly
+    timestamp: timestamp
   }) : "";
 
   if (isLoading) {
@@ -98,21 +120,27 @@ const PrintTicketPage = () => {
         <div className="bg-primary-600 p-6 text-white text-center">
           <h1 className="text-2xl font-bold">{ticket.eventName}</h1>
           <p className="opacity-90 mt-1">
-            {ticket.eventDate.toLocaleDateString()} • {ticket.eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            {ticket.eventDate.toLocaleDateString()} • {ticket.eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
 
         {/* QR Code Section */}
         <div className="p-8 flex flex-col items-center justify-center bg-white">
           <div className="bg-white p-4 rounded-xl shadow-inner border-2 border-dashed border-gray-300">
-            <QRCode 
-              value={qrPayload} 
+            <QRCode
+              value={qrPayload}
               size={256}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
               viewBox={`0 0 256 256`}
             />
           </div>
-          
+
+          {/* Dynamic Timer Display */}
+          <div className="mt-4 flex items-center space-x-2 text-primary-600 font-medium bg-primary-50 px-3 py-1 rounded-full text-sm">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Refreshes in {timeLeft}s</span>
+          </div>
+
           <p className="text-center text-sm text-gray-500 mt-6 flex items-center">
             <Maximize2 className="w-4 h-4 mr-1" />
             Show this QR code at the entrance
@@ -125,7 +153,7 @@ const PrintTicketPage = () => {
             <Shield className="w-4 h-4 mr-1.5" />
             Verified Owner
           </div>
-          <button 
+          <button
             onClick={() => setShowDetails(!showDetails)}
             className="text-primary-600 text-sm hover:underline flex items-center"
           >
@@ -137,20 +165,20 @@ const PrintTicketPage = () => {
         {/* Toggleable Details */}
         {showDetails && (
           <div className="p-6 bg-gray-50 border-t border-gray-200 animate-fade-in">
-             <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Ticket ID</span>
-                  <span className="font-mono font-bold">#{ticket.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Organizer</span>
-                  <span className="font-medium">{ticket.organizer}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Owner</span>
-                  <span className="font-mono text-xs text-gray-600">{ticket.buyer}</span>
-                </div>
-             </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Ticket ID</span>
+                <span className="font-mono font-bold">#{ticket.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Organizer</span>
+                <span className="font-medium">{ticket.organizer}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Owner</span>
+                <span className="font-mono text-xs text-gray-600">{ticket.buyer}</span>
+              </div>
+            </div>
           </div>
         )}
       </div>

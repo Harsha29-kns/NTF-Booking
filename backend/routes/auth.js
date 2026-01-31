@@ -19,10 +19,10 @@ const generateToken = (userId) => {
 router.post('/login', verifyWalletSignature, async (req, res) => {
   try {
     const { walletAddress } = req;
-    
+
     // Find user (DO NOT CREATE)
     const user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
-    
+
     // If user doesn't exist, return 404 so frontend knows to show Register Modal
     if (!user) {
       return res.status(404).json({
@@ -31,13 +31,13 @@ router.post('/login', verifyWalletSignature, async (req, res) => {
         code: 'USER_NOT_FOUND'
       });
     }
-    
+
     // Update last login
     await user.updateLastLogin();
-    
+
     // Generate token
     const token = generateToken(user._id);
-    
+
     res.json({
       success: true,
       message: 'Login successful',
@@ -48,6 +48,7 @@ router.post('/login', verifyWalletSignature, async (req, res) => {
           walletAddress: user.walletAddress,
           username: user.username,
           email: user.email,
+          phone: user.phone, // <--- ADDED
           isOrganizer: user.isOrganizer,
           profileImage: user.profileImage,
           stats: user.stats
@@ -68,8 +69,8 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
   try {
     const { walletAddress } = req;
     // We now accept isOrganizer from the frontend registration form
-    const { username, email, isOrganizer, organizerInfo } = req.body;
-    
+    const { username, email, phone, isOrganizer, organizerInfo } = req.body; // <--- ADDED phone
+
     // Check if user already exists
     const existingUser = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
     if (existingUser) {
@@ -78,7 +79,7 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
         message: 'User already exists'
       });
     }
-    
+
     // Validate username uniqueness
     if (username) {
       const usernameExists = await User.findOne({ username });
@@ -89,7 +90,7 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
         });
       }
     }
-    
+
     // Validate email uniqueness
     if (email) {
       const emailExists = await User.findOne({ email });
@@ -100,22 +101,23 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
         });
       }
     }
-    
+
     // Create user
     const userData = {
-      username: username || `User ${walletAddress.slice(0,6)}`, // Default username if empty
+      username: username || `User ${walletAddress.slice(0, 6)}`, // Default username if empty
       email,
+      phone, // <--- ADDED
       isOrganizer: isOrganizer === true, // Ensure boolean
       organizerInfo: isOrganizer ? organizerInfo : undefined
     };
-    
+
     const user = new User(userData);
     user.walletAddress = walletAddress.toLowerCase();
     await user.save();
-    
+
     // Generate token
     const token = generateToken(user._id);
-    
+
     res.status(201).json({
       success: true,
       message: 'Registration successful',
@@ -126,6 +128,7 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
           walletAddress: user.walletAddress,
           username: user.username,
           email: user.email,
+          phone: user.phone, // <--- ADDED
           isOrganizer: user.isOrganizer,
           profileImage: user.profileImage,
           stats: user.stats
@@ -145,24 +148,24 @@ router.post('/register', verifyWalletSignature, async (req, res) => {
 router.post('/verify', async (req, res) => {
   try {
     const { token } = req.body;
-    
+
     if (!token) {
       return res.status(400).json({
         success: false,
         message: 'Token required'
       });
     }
-    
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
-    
+
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Token valid',
@@ -172,6 +175,7 @@ router.post('/verify', async (req, res) => {
           walletAddress: user.walletAddress,
           username: user.username,
           email: user.email,
+          phone: user.phone, // <--- ADDED
           isOrganizer: user.isOrganizer,
           profileImage: user.profileImage,
           stats: user.stats
@@ -190,27 +194,27 @@ router.post('/verify', async (req, res) => {
 router.post('/refresh', async (req, res) => {
   try {
     const { token } = req.body;
-    
+
     if (!token) {
       return res.status(400).json({
         success: false,
         message: 'Token required'
       });
     }
-    
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId);
-    
+
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token'
       });
     }
-    
+
     // Generate new token
     const newToken = generateToken(user._id);
-    
+
     res.json({
       success: true,
       message: 'Token refreshed',
@@ -230,13 +234,13 @@ router.get('/user/:walletAddress', async (req, res) => {
   try {
     const { walletAddress } = req.params;
     const user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
-    
+
     if (!user) {
       return res.json({ success: true, username: 'Unknown User' });
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       username: user.username,
       email: user.email // Optional: if you want to show email too
     });

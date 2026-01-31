@@ -1,7 +1,7 @@
 const express = require('express');
 const Purchase = require('../models/Purchase');
 const Event = require('../models/Event');
-const User = require('../models/User'); 
+const User = require('../models/User');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -14,8 +14,8 @@ router.post('/', async (req, res) => {
   try {
     const {
       ticketId,
-      buyerInfo,     
-      walletAddress, 
+      buyerInfo,
+      walletAddress,
       purchaseTxHash,
       eventName,
       organizer,
@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
     // Fetch User Profile logic
     let finalBuyerInfo = buyerInfo || {};
     const isBuyerInfoEmpty = !buyerInfo || (typeof buyerInfo === 'object' && Object.keys(buyerInfo).length === 0);
-    
+
     let buyerUserId = null;
 
     if (isBuyerInfoEmpty && buyerWallet) {
@@ -42,17 +42,17 @@ router.post('/', async (req, res) => {
           buyerUserId = user._id;
           finalBuyerInfo = {
             name: user.username || 'Online Customer',
-            phone: user.phone || '', 
+            phone: user.phone || '',
             address: 'Online Purchase',
             sellerPhone: ''
           };
         } else {
-           finalBuyerInfo = {
-             name: 'Guest User',
-             phone: '',
-             address: 'Online Purchase',
-             sellerPhone: ''
-           };
+          finalBuyerInfo = {
+            name: 'Guest User',
+            phone: '',
+            address: 'Online Purchase',
+            sellerPhone: ''
+          };
         }
       } catch (err) {
         console.log("Error fetching user profile for purchase:", err);
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
       ticketId: parseInt(ticketId),
       contractAddress: process.env.CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000',
       buyer: buyerWallet.toLowerCase(),
-      buyerUser: buyerUserId, 
+      buyerUser: buyerUserId,
       seller: seller.toLowerCase(),
       price: price.toString(),
       purchaseTxHash: purchaseTxHash.toLowerCase(),
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
       eventDate: new Date(eventDate),
       posterUrl,
       ticketImageUrl,
-      buyerInfo: finalBuyerInfo 
+      buyerInfo: finalBuyerInfo
     });
 
     await purchase.save();
@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
         event.availableTickets = Math.max(0, event.availableTickets - 1);
         await event.save();
       }
-    } catch (e) {}
+    } catch (e) { }
 
     res.status(201).json({
       success: true,
@@ -117,7 +117,7 @@ router.get('/ticket/:ticketId', async (req, res) => {
         { ticketId: ticketId.toString() }   // Try String: "5"
       ]
     });
-    
+
     if (!purchaseDoc) {
       console.log(`❌ [DEBUG] Ticket #${ticketId} NOT found in DB.`);
       return res.status(404).json({ success: false, message: 'Purchase not found' });
@@ -134,7 +134,7 @@ router.get('/ticket/:ticketId', async (req, res) => {
         const user = await User.findById(purchase.buyerUser);
         if (user) {
           if (!purchase.buyerInfo) purchase.buyerInfo = {};
-          
+
           purchase.buyerInfo.name = user.username || user.name || purchase.buyerInfo.name || 'Unknown';
           purchase.buyerInfo.phone = user.phone || purchase.buyerInfo.phone || 'N/A';
         }
@@ -142,13 +142,65 @@ router.get('/ticket/:ticketId', async (req, res) => {
         console.warn("Error refreshing user details:", err);
       }
     }
-    
+
     res.json({
       success: true,
       data: { purchase }
     });
   } catch (error) {
     console.error('Get purchase error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get purchase' });
+  }
+});
+
+// ✅ NEW: GET /api/purchases/by-wallet/:walletAddress/ticket/:ticketId
+// Fetch purchase details for a specific wallet and ticket (for transfer history)
+router.get('/by-wallet/:walletAddress/ticket/:ticketId', async (req, res) => {
+  try {
+    const { walletAddress, ticketId } = req.params;
+    console.log(`🔍 [DEBUG] Searching for wallet ${walletAddress} and ticket ${ticketId}`);
+
+    // Search for purchase by wallet address and ticket ID
+    const purchaseDoc = await Purchase.collection.findOne({
+      buyer: walletAddress.toLowerCase(),
+      $or: [
+        { ticketId: parseInt(ticketId) },
+        { ticketId: ticketId.toString() }
+      ]
+    });
+
+    if (!purchaseDoc) {
+      console.log(`❌ [DEBUG] No purchase found for wallet ${walletAddress} and ticket ${ticketId}`);
+      return res.status(404).json({
+        success: false,
+        message: 'Purchase not found for this wallet and ticket combination'
+      });
+    }
+
+    console.log(`✅ [DEBUG] Found Purchase:`, purchaseDoc.purchaseId);
+
+    let purchase = purchaseDoc;
+
+    // Manually inject user info if available
+    if (purchase.buyerUser) {
+      try {
+        const user = await User.findById(purchase.buyerUser);
+        if (user) {
+          if (!purchase.buyerInfo) purchase.buyerInfo = {};
+          purchase.buyerInfo.name = user.username || user.name || purchase.buyerInfo.name || 'Unknown';
+          purchase.buyerInfo.phone = user.phone || purchase.buyerInfo.phone || 'N/A';
+        }
+      } catch (err) {
+        console.warn("Error refreshing user details:", err);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: { purchase }
+    });
+  } catch (error) {
+    console.error('Get purchase by wallet error:', error);
     res.status(500).json({ success: false, message: 'Failed to get purchase' });
   }
 });
@@ -172,7 +224,7 @@ router.put('/:purchaseId/status', async (req, res) => {
     const { status, txHash, additionalData } = req.body;
     const purchase = await Purchase.findOne({ purchaseId });
     if (!purchase) return res.status(404).json({ success: false, message: 'Purchase not found' });
-    
+
     await purchase.updateStatus(status, txHash, additionalData);
     res.json({ success: true, message: 'Status updated', data: { purchase } });
   } catch (error) {
@@ -187,7 +239,7 @@ router.post('/:purchaseId/review', async (req, res) => {
     const { rating, review } = req.body;
     const purchase = await Purchase.findOne({ purchaseId });
     if (!purchase) return res.status(404).json({ success: false, message: 'Purchase not found' });
-    
+
     await purchase.addReview(rating, review);
     res.json({ success: true, message: 'Review added', data: { purchase } });
   } catch (error) {

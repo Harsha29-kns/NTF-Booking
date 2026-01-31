@@ -41,8 +41,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
@@ -54,11 +54,13 @@ app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/transfers', transferRoutes); // NEW: Register transfer endpoint
+app.use('/api/entry', require('./routes/entry')); // NEW: Register entry endpoint
+app.use('/api/gatekeepers', require('./routes/gatekeepers')); // NEW: Gatekeeper Access Routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       success: false,
@@ -66,14 +68,14 @@ app.use((err, req, res, next) => {
       errors: Object.values(err.errors).map(e => e.message)
     });
   }
-  
+
   if (err.name === 'CastError') {
     return res.status(400).json({
       success: false,
       message: 'Invalid ID format'
     });
   }
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error'
@@ -105,13 +107,13 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   await connectDB();
-  
+
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
   });
-  
+
   // Start event indexer
   if (process.env.NODE_ENV !== 'test') {
     startEventIndexer();

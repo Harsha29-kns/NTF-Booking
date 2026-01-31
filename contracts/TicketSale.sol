@@ -43,6 +43,10 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
     mapping(address => uint256[]) public userPurchases;
     mapping(address => mapping(uint256 => bool)) public userHasPurchased;
     
+    // ✅ NEW: Entry tracking for duplicate prevention
+    mapping(uint256 => uint256) public ticketEntryTime; // ticketId => timestamp when used for entry
+    mapping(address => bool) public isGatekeeper; // Authorized gatekeepers who can mark tickets as used
+    
     event TicketCreated(
         uint256 indexed ticketId,
         string eventName,
@@ -73,6 +77,18 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         address indexed from,
         address indexed to,
         address executedBy
+    );
+    
+    // ✅ NEW: Entry tracking events
+    event TicketUsed(
+        uint256 indexed ticketId,
+        address indexed buyer,
+        uint256 timestamp
+    );
+    
+    event GatekeeperUpdated(
+        address indexed gatekeeper,
+        bool status
     );
     
     constructor() ERC721("ConcertTicket", "TICKET") {}
@@ -192,9 +208,9 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         emit TicketDownloaded(ticketId, msg.sender);
     }
     
-    // --- UPDATED: Admin Transfer (Now DECENTRALIZED for Organizers) ---
-    // Removed 'onlyOwner' modifier. Added check for 'ticket.seller'.
-    function adminTransferTicket(address from, address to, uint256 ticketId) external whenNotPaused nonReentrant {
+    // --- Organizer Transfer (Decentralized for Event Organizers) ---
+    // Organizers can transfer tickets for their events. Contract owner can transfer any ticket.
+    function organizerTransferTicket(address from, address to, uint256 ticketId) external whenNotPaused nonReentrant {
         require(to != address(0), "Cannot transfer to zero address");
         
         Ticket storage ticket = tickets[ticketId];
@@ -206,7 +222,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         // ✅ SECURITY FIX: Allow Contract Owner OR Event Organizer (Seller)
         require(
             msg.sender == owner() || msg.sender == ticket.seller, 
-            "Not authorized: Only Organizer or Admin can transfer"
+            "Not authorized: Only Organizer or Contract Owner can transfer"
         );
 
         // If the ticket is minted (downloaded), 'ownerOf' must match 'from'
@@ -332,7 +348,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         return userTickets;
     }
     
-    // --- UPDATED: Allow Organizer to Transfer ---
+    // --- Allow Organizer to Transfer ---
     function _beforeTokenTransfer(
         address from,
         address to,
@@ -340,7 +356,7 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         uint256 batchSize
     ) internal override {
         // Allow transfer if it's Minting (from 0), Burning (to 0), 
-        // OR if the ADMIN (owner) is doing it, 
+        // OR if the Contract Owner is doing it, 
         // OR if the ORGANIZER (ticket.seller) is doing it.
         
         // Note: We access tickets[tokenId] to get the seller.
@@ -370,11 +386,61 @@ contract TicketSale is ERC721, ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
     
+    // ========================================
+    // ✅ NEW: ENTRY TRACKING FUNCTIONS
+    // ========================================
+    
+    /**
+     * @dev Mark ticket as used for entry (called by gatekeeper at venue)
+     * @param ticketId The ID of the ticket being used
+     */
+    function markTicketUsed(uint256 ticketId) external whenNotPaused {
+        require(isGatekeeper[msg.sender], "Only gatekeepers can mark entry");
+        
+        Ticket storage ticket = tickets[ticketId];
+        require(ticket.ticketId != 0, "Ticket does not exist");
+        require(ticket.isSold, "Ticket not sold");
+        require(!ticket.isRefunded, "Ticket has been refunded");
+        require(ticketEntryTime[ticketId] == 0, "Ticket already used for entry");
+        
+        ticketEntryTime[ticketId] = block.timestamp;
+        emit TicketUsed(ticketId, ticket.buyer, block.timestamp);
+    }
+    
+    /**
+     * @dev Check if ticket has been used for entry
+     * @param ticketId The ID of the ticket to check
+     * @return bool True if ticket has been used
+     */
+    function hasTicketBeenUsed(uint256 ticketId) external view returns (bool) {
+        return ticketEntryTime[ticketId] > 0;
+    }
+    
+    /**
+     * @dev Get the timestamp when ticket was used for entry
+     * @param ticketId The ID of the ticket
+     * @return uint256 Timestamp (0 if not used)
+     */
+    function getTicketEntryTime(uint256 ticketId) external view returns (uint256) {
+        return ticketEntryTime[ticketId];
+    }
+    
+    /**
+     * @dev Add or remove gatekeeper authorization (owner only)
+     * @param gatekeeper Address of the gatekeeper
+     * @param status True to authorize, false to revoke
+     */
+    function setGatekeeper(address gatekeeper, bool status) external onlyOwner {
+        require(gatekeeper != address(0), "Invalid gatekeeper address");
+        isGatekeeper[gatekeeper] = status;
+        emit GatekeeperUpdated(gatekeeper, status);
+    }
+    
     function resetTicketQuantities(uint256 ticketId, uint256 newTotalTickets) external {
         Ticket storage ticket = tickets[ticketId];
         
         require(ticket.ticketId != 0, "Ticket does not exist");
-        // Check if caller is Organizer or Admin
+        // Check if caller is Organizer or Owner
         require(msg.sender == ticket.seller || msg.sender == owner(), "Not authorized");
         require(newTotalTickets > 0, "Total tickets must be greater than 0");
         

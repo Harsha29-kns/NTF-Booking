@@ -5,11 +5,11 @@ import { useAuth } from '../contexts/AuthContext'; // Import Auth Context
 import { getContract, parseETH, isCircuitBreakerOpen, resetMetaMaskConnection } from '../utils/web3';
 import { uploadImage, validateFile, fileToBase64 } from '../utils/ipfs';
 import toast from 'react-hot-toast';
-import { 
-  Upload, 
-  Calendar, 
-  DollarSign, 
-  User, 
+import {
+  Upload,
+  Calendar,
+  DollarSign,
+  User,
   Image as ImageIcon,
   Loader2,
   AlertTriangle,
@@ -60,17 +60,17 @@ const CreateSalePage = () => {
     try {
       validateFile(file);
       const preview = await fileToBase64(file);
-      
+
       setFormData(prev => ({
         ...prev,
         [`${type}File`]: file
       }));
-      
+
       setPreviews(prev => ({
         ...prev,
         [type]: preview
       }));
-      
+
       toast.success(`${type} uploaded successfully`);
     } catch (error) {
       toast.error(error.message);
@@ -106,7 +106,7 @@ const CreateSalePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!isConnected || !isSupportedNetwork) {
       toast.error('Please connect your wallet and switch to the correct network');
       return;
@@ -129,7 +129,7 @@ const CreateSalePage = () => {
     const eventTimestamp = Math.floor(new Date(formData.eventDate).getTime() / 1000);
     const saleEndTimestamp = Math.floor(new Date(formData.saleEndDate).getTime() / 1000);
     const nowTs = Math.floor(Date.now() / 1000);
-    
+
     console.log('Date validation:', {
       currentTime: nowTs,
       eventTimestamp,
@@ -180,16 +180,16 @@ const CreateSalePage = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
       // Upload images to IPFS
       toast.loading('Uploading images to IPFS...', { id: 'upload' });
-      
+
       const [posterCID, ticketCID] = await Promise.all([
         uploadImage(formData.posterFile),
         uploadImage(formData.ticketFile)
       ]);
-      
+
       console.log('IPFS Upload Results:', { posterCID, ticketCID });
       toast.success('Images uploaded successfully!', { id: 'upload' });
 
@@ -197,7 +197,7 @@ const CreateSalePage = () => {
       let contract;
       let retryCount = 0;
       const maxRetries = 3;
-      
+
       while (retryCount < maxRetries) {
         try {
           contract = await getContract();
@@ -216,9 +216,9 @@ const CreateSalePage = () => {
           throw error;
         }
       }
-      
+
       toast.loading('Creating ticket sale...', { id: 'create' });
-      
+
       console.log('Creating sale with data:', {
         eventName: formData.eventName,
         organizer: formData.organizer,
@@ -229,13 +229,13 @@ const CreateSalePage = () => {
         posterCID,
         ticketCID
       });
-      
+
       // Additional debugging
       console.log('Contract address:', contract.target);
       console.log('Current timestamp:', Math.floor(Date.now() / 1000));
       console.log('Event timestamp:', eventTimestamp);
       console.log('Sale end timestamp:', saleEndTimestamp);
-      
+
       // Check if event already exists
       try {
         const existingTicketId = await contract.eventToTicketId(formData.eventName);
@@ -247,10 +247,10 @@ const CreateSalePage = () => {
       } catch (error) {
         console.log('Could not check existing event:', error.message);
       }
-      
+
       // Try the simplest possible approach - no gas limits, let MetaMask handle everything
       console.log('Attempting transaction with no gas limits...');
-      
+
       const tx = await contract.createSale(
         formData.eventName,
         formData.organizer,
@@ -261,15 +261,15 @@ const CreateSalePage = () => {
         posterCID,
         ticketCID
       );
-      
+
       console.log('Transaction submitted:', tx.hash);
       toast.loading('Waiting for confirmation...', { id: 'create' });
-      
+
       const receipt = await tx.wait();
       console.log('Transaction confirmed:', receipt);
-      
+
       toast.success('Ticket sale created successfully!', { id: 'create' });
-      
+
       // Reset form
       setFormData({
         eventName: '',
@@ -285,24 +285,24 @@ const CreateSalePage = () => {
         poster: null,
         ticket: null,
       });
-      
+
       // Notify other pages that tickets have been updated
       try {
-        window.dispatchEvent(new CustomEvent('ticketsUpdated', { 
-          detail: { action: 'created' } 
+        window.dispatchEvent(new CustomEvent('ticketsUpdated', {
+          detail: { action: 'created' }
         }));
       } catch (e) {
         // noop
       }
-      
+
       // Redirect to tickets page after a short delay
       setTimeout(() => {
         window.location.href = '/tickets';
       }, 1500);
-      
+
     } catch (error) {
       console.error('Error creating sale:', error);
-      
+
       // Handle specific error types
       if (error.message.includes('circuit breaker') || error.message.includes('Execution prevented')) {
         setCircuitBreakerOpen(true);
@@ -377,7 +377,7 @@ const CreateSalePage = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
           Create Ticket Sale
         </h1>
-        
+
         {/* Circuit Breaker Warning */}
         {circuitBreakerOpen && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -388,7 +388,7 @@ const CreateSalePage = () => {
                   MetaMask Circuit Breaker Active
                 </h3>
                 <p className="text-sm text-yellow-700 mb-3">
-                  MetaMask has temporarily blocked requests due to too many failed attempts. 
+                  MetaMask has temporarily blocked requests due to too many failed attempts.
                   This usually happens when the local blockchain isn't running or there are network issues.
                 </p>
                 <div className="flex space-x-3">
@@ -413,7 +413,7 @@ const CreateSalePage = () => {
             </div>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Event Name */}
           <div>

@@ -3,17 +3,17 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { getContract, formatAddress } from '../utils/web3';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Loader2, 
-  User, 
-  ArrowRight, 
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
+  User,
+  ArrowRight,
   Clock,
   ShieldAlert
 } from 'lucide-react';
 
-const AdminTransferRequests = () => {
+const OrganizerTransferRequests = () => {
   const { account, isConnected } = useWeb3();
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,37 +51,37 @@ const AdminTransferRequests = () => {
 
       // 1. Execute Blockchain Transaction
       const contract = await getContract();
-      
+
       console.log(`Transferring Ticket ${request.ticketId} from ${request.senderAddress} to ${request.receiverAddress}`);
-      
+
       // Call the new admin function we added to the smart contract
-      const tx = await contract.adminTransferTicket(
+      const tx = await contract.organizerTransferTicket(
         request.senderAddress,
         request.receiverAddress,
         request.ticketId
       );
 
       toast.loading('Transaction submitted. Waiting for confirmation...', { id: loadingToast });
-      
+
       // Wait for transaction to be mined
       await tx.wait();
 
       // 2. Update Backend Status
       toast.loading('Updating database...', { id: loadingToast });
-      
+
       await api.post('/transfers/approve', {
         requestId: request._id,
         txHash: tx.hash
       });
 
       toast.success('Transfer Successful!', { id: loadingToast });
-      
+
       // Remove from list
       setRequests(prev => prev.filter(r => r._id !== request._id));
 
     } catch (error) {
       console.error('Transfer failed:', error);
-      
+
       // Extract readable error message from Metamask/Contract
       let errorMessage = "Transfer failed";
       if (error.reason) errorMessage = error.reason;
@@ -100,7 +100,7 @@ const AdminTransferRequests = () => {
 
     try {
       setProcessingId(request._id);
-      
+
       await api.post('/transfers/reject', {
         requestId: request._id
       });
@@ -120,7 +120,7 @@ const AdminTransferRequests = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <ShieldAlert className="w-12 h-12 text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Admin Access Required</h2>
+        <h2 className="text-xl font-semibold mb-2">Organizer Access Required</h2>
         <p className="text-gray-500">Please connect your wallet to manage transfers.</p>
       </div>
     );
@@ -154,8 +154,8 @@ const AdminTransferRequests = () => {
       ) : (
         <div className="grid gap-4">
           {requests.map((req) => (
-            <div 
-              key={req._id} 
+            <div
+              key={req._id}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition-all hover:shadow-md"
             >
               {/* Request Info */}
@@ -184,7 +184,7 @@ const AdminTransferRequests = () => {
                       {formatAddress(req.senderAddress)}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-center">
                     <ArrowRight className="w-5 h-5 text-gray-400" />
                   </div>
@@ -222,7 +222,7 @@ const AdminTransferRequests = () => {
                   )}
                   Approve
                 </button>
-                
+
                 <button
                   onClick={() => handleReject(req)}
                   disabled={!!processingId}
@@ -240,4 +240,4 @@ const AdminTransferRequests = () => {
   );
 };
 
-export default AdminTransferRequests;
+export default OrganizerTransferRequests;
